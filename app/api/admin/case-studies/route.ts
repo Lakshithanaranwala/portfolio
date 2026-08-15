@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
     content_images_2: [],
     outcome_rows: [],
     delivery_body: '',
+    final_images: [],
     archived: false,
     selected_work: false,
     selected_work_order: null,

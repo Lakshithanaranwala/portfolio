@@ -30,8 +30,8 @@ const WORD_HOLD_MS      = 4000;
 const SCATTER_DRIFT_MS  = 4000;   // random drift after scatter
 const PULL_MS           = 3000;   // gravity pull back to word
 const PULL_LERP         = 0.018;  // slow gravity feel
-const INITIAL_DELAY_MS  = 1500;
-const WORDS             = ['Hi', 'UI', 'UX'];
+const INITIAL_DELAY_MS  = 0;
+const DEFAULT_WORDS     = ['Hi', 'UI', 'UX'];
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -75,8 +75,14 @@ function sampleTargets(
   const fontSize = Math.min(cw * 0.40, ch * 0.62);
   const pad = 28;
 
+  // Use a heavy sans-serif for symbols (e.g. ↓), display serif for text
+  const isSymbol = /^\P{L}+$/u.test(word);
+  const font = isSymbol
+    ? `900 ${fontSize}px Arial, sans-serif`
+    : `300 ${fontSize}px 'Cormorant Garamond', serif`;
+
   ctx.clearRect(0, 0, cw, ch);
-  ctx.font = `300 ${fontSize}px 'Cormorant Garamond', serif`;
+  ctx.font = font;
   ctx.textAlign = 'right';
   ctx.textBaseline = 'bottom';
   ctx.fillStyle = '#fff';
@@ -102,7 +108,9 @@ function sampleTargets(
 
 /* ─── Component ──────────────────────────────────────────────────────────── */
 
-export default function ParticleCanvas() {
+type Props = { words?: string[] };
+
+export default function ParticleCanvas({ words = DEFAULT_WORDS }: Props) {
   const canvasRef   = useRef<HTMLCanvasElement>(null);
   const particles   = useRef<Particle[]>([]);
   const mouseRef    = useRef({ x: -9999, y: -9999 });
@@ -153,12 +161,12 @@ export default function ParticleCanvas() {
         return;
       }
       modeRef.current = 'forming';
-      const targets = sampleTargets(WORDS[wordIdxRef.current], canvas.width, canvas.height, PARTICLE_COUNT);
+      const targets = sampleTargets(words[wordIdxRef.current], canvas.width, canvas.height, PARTICLE_COUNT);
       assignTargets(targets);
 
       clearAllTimers();
       wordTimer.current = setTimeout(() => {
-        wordIdxRef.current = (wordIdxRef.current + 1) % WORDS.length;
+        wordIdxRef.current = (wordIdxRef.current + 1) % words.length;
         startForming();
       }, WORD_HOLD_MS);
     }
@@ -208,7 +216,7 @@ export default function ParticleCanvas() {
       canvas.height = canvas.offsetHeight;
       initParticles();
       if (modeRef.current === 'forming') {
-        const targets = sampleTargets(WORDS[wordIdxRef.current], canvas.width, canvas.height, PARTICLE_COUNT);
+        const targets = sampleTargets(words[wordIdxRef.current], canvas.width, canvas.height, PARTICLE_COUNT);
         assignTargets(targets);
       }
     }

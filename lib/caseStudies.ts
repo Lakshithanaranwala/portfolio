@@ -60,6 +60,7 @@ export type CaseStudy = {
   contentImages2: CaseStudyImage[];
   outcomeRows: OutcomeRow[];
   deliveryBody: string;
+  finalImages: CaseStudyImage[];
   archived: boolean;
   selectedWork: boolean;
   selectedWorkOrder: number | null;
@@ -165,6 +166,7 @@ export const staticCaseStudies: CaseStudy[] = [
     contentImages2: [{ from: '#16213e', to: '#0f3460' }, { from: '#0f3460', to: '#1a1a2e' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
+    finalImages: [{ from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }],
     archived: false,
     selectedWork: true,
     selectedWorkOrder: 0,
@@ -196,6 +198,7 @@ export const staticCaseStudies: CaseStudy[] = [
     contentImages2: [{ from: '#2d1b69', to: '#553c9a' }, { from: '#1a1a2e', to: '#2d1b69' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
+    finalImages: [{ from: '#0d1b2a', to: '#1b263b' }, { from: '#2d1b69', to: '#553c9a' }],
     archived: false,
     selectedWork: true,
     selectedWorkOrder: 1,
@@ -227,6 +230,7 @@ export const staticCaseStudies: CaseStudy[] = [
     contentImages2: [{ from: '#0d2b1f', to: '#1a4a35' }, { from: '#1a3a2e', to: '#0d2b1f' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
+    finalImages: [{ from: '#1a3a2e', to: '#2d6a4f' }, { from: '#0d2b1f', to: '#1a4a35' }],
     archived: false,
     selectedWork: true,
     selectedWorkOrder: 2,
@@ -258,6 +262,7 @@ export const staticCaseStudies: CaseStudy[] = [
     contentImages2: [{ from: '#5c1a1a', to: '#8b3a3a' }, { from: '#3a1a1a', to: '#5c1a1a' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
+    finalImages: [{ from: '#3a1a1a', to: '#6b2d2d' }, { from: '#5c1a1a', to: '#8b3a3a' }],
     archived: false,
     selectedWork: true,
     selectedWorkOrder: 3,
@@ -295,6 +300,9 @@ function dbToCase(row: Record<string, unknown>): CaseStudy {
     contentImages2: (row.content_images_2 as CaseStudyImage[]) ?? [],
     outcomeRows: (row.outcome_rows as OutcomeRow[]) ?? [],
     deliveryBody: (row.delivery_body as string) ?? '',
+    finalImages: ((row.final_images as CaseStudyImage[] | null)?.length
+      ? row.final_images as CaseStudyImage[]
+      : [{ from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }]),
     archived: (row.archived as boolean) ?? false,
     selectedWork: (row.selected_work as boolean) ?? false,
     selectedWorkOrder: (row.selected_work_order as number | null) ?? null,
@@ -357,6 +365,46 @@ export async function getSelectedWork(): Promise<SelectedWorkCard[]> {
   return staticCaseStudies
     .filter((s) => s.selectedWork && !s.archived)
     .sort((a, b) => (a.selectedWorkOrder ?? 999) - (b.selectedWorkOrder ?? 999))
+    .map((s) => ({
+      slug: s.slug,
+      cardTitle: s.cardTitle || s.label,
+      cardCategory: s.cardCategory || s.scope,
+      cardImages: s.cardImages,
+      cardSlideshow: s.cardSlideshow,
+      heroBgFrom: s.heroBg.from,
+      heroBgTo: s.heroBg.to,
+    }));
+}
+
+export async function getWorkCards(): Promise<SelectedWorkCard[]> {
+  const adminClient = createAdminClient();
+  if (adminClient) {
+    try {
+      const { data, error } = await adminClient
+        .from('case_studies')
+        .select('slug, label, card_title, card_category, card_images, card_slideshow, hero_bg_from, hero_bg_to')
+        .neq('archived', true)
+        .order('label', { ascending: true });
+
+      if (!error && data) {
+        return data.map((row) => ({
+          slug: row.slug as string,
+          cardTitle: (row.card_title as string) || (row.label as string) || '',
+          cardCategory: (row.card_category as string) || '',
+          cardImages: (row.card_images as string[]) || [],
+          cardSlideshow: (row.card_slideshow as boolean) || false,
+          heroBgFrom: (row.hero_bg_from as string) || '#0f0e17',
+          heroBgTo: (row.hero_bg_to as string) || '#1a1a2e',
+        }));
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  return staticCaseStudies
+    .filter((s) => !s.archived)
+    .sort((a, b) => a.label.localeCompare(b.label))
     .map((s) => ({
       slug: s.slug,
       cardTitle: s.cardTitle || s.label,

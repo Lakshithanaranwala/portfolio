@@ -409,6 +409,7 @@ type FormState = {
   contentImages2: CaseStudyImage[];
   outcomeRows: OutcomeRow[];
   deliveryBody: string;
+  finalImages: CaseStudyImage[];
   archived: boolean;
   selectedWork: boolean;
   selectedWorkOrder: number | null;
@@ -456,6 +457,10 @@ function emptyForm(): FormState {
     ],
     outcomeRows: [{ problem: '', solution: '', uxImpact: '' }],
     deliveryBody: '',
+    finalImages: [
+      { from: '#0f0e17', to: '#1a1a2e' },
+      { from: '#1a1a2e', to: '#16213e' },
+    ],
     archived: false,
     selectedWork: false,
     selectedWorkOrder: null,
@@ -491,6 +496,9 @@ function dbRowToForm(row: Record<string, unknown>): FormState {
     contentImages2: (row.content_images_2 as CaseStudyImage[]) ?? [],
     outcomeRows: (row.outcome_rows as OutcomeRow[]) ?? [{ problem: '', solution: '', uxImpact: '' }],
     deliveryBody: (row.delivery_body as string) ?? '',
+    finalImages: ((row.final_images as CaseStudyImage[] | null)?.length
+      ? row.final_images as CaseStudyImage[]
+      : [{ from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }]),
     archived: (row.archived as boolean) ?? false,
     selectedWork: (row.selected_work as boolean) ?? false,
     selectedWorkOrder: (row.selected_work_order as number | null) ?? null,
@@ -554,6 +562,7 @@ export default function CaseStudyEditor() {
           contentImages2: s.contentImages2,
           outcomeRows: s.outcomeRows,
           deliveryBody: s.deliveryBody,
+          finalImages: s.finalImages,
           archived: s.archived,
           selectedWork: s.selectedWork,
           selectedWorkOrder: s.selectedWorkOrder,
@@ -1154,6 +1163,25 @@ export default function CaseStudyEditor() {
                   placeholder="Describe the delivery and handoff..."
                 />
               </Field>
+
+              <Divider />
+
+              <FieldLabel style={{ display: 'block', marginBottom: '1rem' }}>
+                Final Images (after Delivery)
+              </FieldLabel>
+              {form.finalImages.map((img, i) => (
+                <Field key={i}>
+                  <ImageUpload
+                    label={`Image ${i + 1}`}
+                    value={img.src}
+                    onChange={(url) => {
+                      const next = [...form.finalImages];
+                      next[i] = { ...next[i], src: url };
+                      set('finalImages', next);
+                    }}
+                  />
+                </Field>
+              ))}
             </>
           )}
 

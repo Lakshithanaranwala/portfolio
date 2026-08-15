@@ -61,6 +61,7 @@ export async function PUT(
     content_images_2: body.contentImages2,
     outcome_rows: body.outcomeRows,
     delivery_body: body.deliveryBody,
+    final_images: body.finalImages,
     archived: body.archived,
     selected_work: body.selectedWork,
     selected_work_order: body.selectedWorkOrder,

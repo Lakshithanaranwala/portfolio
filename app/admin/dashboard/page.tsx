@@ -7,6 +7,15 @@ import styled from 'styled-components';
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
+type Message = {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at: string;
+};
+
 type StudySummary = {
   slug: string;
   label: string;
@@ -369,6 +378,110 @@ const ErrorMsg = styled.p`
   margin-top: 0.75rem;
 `;
 
+/* ── Tab nav ── */
+
+const TabNav = styled.div`
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #1a1a1a;
+  margin-bottom: 2.5rem;
+`;
+
+const Tab = styled.button<{ $active: boolean }>`
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid ${({ $active }) => ($active ? '#FF6B35' : 'transparent')};
+  color: ${({ $active }) => ($active ? '#fff' : '#444')};
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+  margin-bottom: -1px;
+  &:hover { color: #fff; }
+`;
+
+/* ── Messages list ── */
+
+const MsgList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const MsgCard = styled.div`
+  background: #111;
+  border: 1px solid #1a1a1a;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+`;
+
+const MsgHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+`;
+
+const MsgMeta = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const MsgName = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #fff;
+`;
+
+const MsgEmail = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: #555;
+  margin-top: 0.1rem;
+`;
+
+const MsgSubject = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: #888;
+  margin-top: 0.1rem;
+`;
+
+const MsgDate = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: #333;
+  flex-shrink: 0;
+`;
+
+const MsgBody = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: #666;
+  border-top: 1px solid #1a1a1a;
+  padding-top: 0.875rem;
+  white-space: pre-wrap;
+`;
+
+const DeleteBtn = styled.button`
+  padding: 0.3rem 0.75rem;
+  background: none;
+  border: 1px solid #222;
+  border-radius: 4px;
+  color: #555;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  &:hover { border-color: #e74c3c; color: #e74c3c; }
+`;
+
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
 function toSlug(str: string) {
@@ -384,7 +497,9 @@ function toSlug(str: string) {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'studies' | 'messages'>('studies');
   const [studies, setStudies] = useState<StudySummary[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newLabel, setNewLabel] = useState('');
@@ -398,7 +513,13 @@ export default function AdminDashboard() {
       .then(setStudies);
   }
 
-  useEffect(() => { loadStudies(); }, []);
+  function loadMessages() {
+    fetch('/api/admin/messages')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setMessages(data); });
+  }
+
+  useEffect(() => { loadStudies(); loadMessages(); }, []);
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -442,6 +563,11 @@ export default function AdminDashboard() {
     loadStudies();
   }
 
+  async function deleteMessage(id: string) {
+    await fetch(`/api/admin/messages/${id}`, { method: 'DELETE' });
+    loadMessages();
+  }
+
   const selected = studies
     .filter((s) => s.selected_work && !s.archived)
     .sort((a, b) => (a.selected_work_order ?? 999) - (b.selected_work_order ?? 999));
@@ -475,6 +601,51 @@ export default function AdminDashboard() {
       </TopBar>
 
       <Content>
+        <TabNav>
+          <Tab $active={activeTab === 'studies'} onClick={() => setActiveTab('studies')}>
+            Case Studies
+          </Tab>
+          <Tab $active={activeTab === 'messages'} onClick={() => setActiveTab('messages')}>
+            Messages {messages.length > 0 && `(${messages.length})`}
+          </Tab>
+        </TabNav>
+
+        {/* ── Messages Tab ── */}
+        {activeTab === 'messages' && (
+          <>
+            <SectionHeader>
+              <SectionTitle>Contact Messages</SectionTitle>
+            </SectionHeader>
+            {messages.length === 0 ? (
+              <EmptyNote>No messages yet.</EmptyNote>
+            ) : (
+              <MsgList>
+                {messages.map((msg) => (
+                  <MsgCard key={msg.id}>
+                    <MsgHeader>
+                      <MsgMeta>
+                        <MsgName>{msg.name}</MsgName>
+                        <MsgEmail>{msg.email}</MsgEmail>
+                        {msg.subject && <MsgSubject>Re: {msg.subject}</MsgSubject>}
+                      </MsgMeta>
+                      <MsgDate>
+                        {new Date(msg.created_at).toLocaleDateString('en-GB', {
+                          day: 'numeric', month: 'short', year: 'numeric',
+                        })}
+                      </MsgDate>
+                      <DeleteBtn onClick={() => deleteMessage(msg.id)}>Delete</DeleteBtn>
+                    </MsgHeader>
+                    <MsgBody>{msg.message}</MsgBody>
+                  </MsgCard>
+                ))}
+              </MsgList>
+            )}
+          </>
+        )}
+
+        {/* ── Case Studies Tab ── */}
+        {activeTab === 'studies' && (
+          <>
         {/* ── Selected Work ── */}
         <SectionHeader>
           <SectionTitle>Selected Work</SectionTitle>
@@ -542,6 +713,8 @@ export default function AdminDashboard() {
                 </StudyCard>
               ))}
             </Grid>
+          </>
+        )}
           </>
         )}
       </Content>
