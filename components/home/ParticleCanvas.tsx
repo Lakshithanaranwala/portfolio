@@ -65,6 +65,7 @@ function sampleTargets(
   ch: number,
   count: number,
 ): { x: number; y: number }[] {
+  if (!cw || !ch) return [];
   const off = document.createElement('canvas');
   off.width = cw;
   off.height = ch;
@@ -147,6 +148,10 @@ export default function ParticleCanvas() {
 
     /* ── Start forming a word ── */
     function startForming() {
+      if (!canvas.width || !canvas.height) {
+        wordTimer.current = setTimeout(startForming, 200);
+        return;
+      }
       modeRef.current = 'forming';
       const targets = sampleTargets(WORDS[wordIdxRef.current], canvas.width, canvas.height, PARTICLE_COUNT);
       assignTargets(targets);
