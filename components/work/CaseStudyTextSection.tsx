@@ -53,9 +53,9 @@ const TextBlock = styled.div`
 
   p {
     font-family: var(--font-body);
-    font-size: 0.9375rem;
+    font-size: 1rem;
     line-height: 1.75;
-    color: ${({ theme }) => theme.colors.textSecondary};
+    color: ${({ theme }) => theme.colors.textBody};
     transition: color 0.4s ease;
 
     & + p {

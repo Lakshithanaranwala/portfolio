@@ -56,7 +56,7 @@ const TextBlock = styled.div`
     font-family: var(--font-body);
     font-size: clamp(1rem, 1.5vw, 1.2rem);
     line-height: 1.75;
-    color: ${({ theme }) => theme.colors.textSecondary};
+    color: ${({ theme }) => theme.colors.textBody};
     transition: color 0.4s ease;
 
     & + p {

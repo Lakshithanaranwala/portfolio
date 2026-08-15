@@ -44,11 +44,23 @@ const RowDivider = styled.div`
 
 const ColText = styled.p`
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   line-height: 1.75;
-  color: ${({ theme }) => theme.colors.textSecondary};
+  color: ${({ theme }) => theme.colors.textBody};
   transition: color 0.4s ease;
+  margin: 0;
 `;
+
+/* ─── Helpers ────────────────────────────────────────────────────────────── */
+
+function ColLines({ text }: { text: string }) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+      {lines.map((line, i) => <ColText key={i}>{line}</ColText>)}
+    </div>
+  );
+}
 
 /* ─── Component ──────────────────────────────────────────────────────────── */
 
@@ -65,9 +77,9 @@ export default function CaseStudyThreeColumn({ study }: { study: CaseStudy }) {
         {rows.map((row, i) => (
           <React.Fragment key={i}>
             <RowDivider />
-            <ColText>{row.problem}</ColText>
-            <ColText>{row.solution}</ColText>
-            <ColText>{row.uxImpact}</ColText>
+            <ColLines text={row.problem} />
+            <ColLines text={row.solution} />
+            <ColLines text={row.uxImpact} />
           </React.Fragment>
         ))}
       </Grid>

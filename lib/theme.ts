@@ -6,6 +6,7 @@ export type Theme = {
     text: string;
     textMuted: string;
     textSecondary: string;
+    textBody: string;
     border: string;
     navBg: string;
     buttonOutlineBorder: string;
@@ -26,6 +27,7 @@ export const darkTheme: Theme = {
     text: '#ffffff',
     textMuted: 'rgba(255, 255, 255, 0.38)',
     textSecondary: 'rgba(255, 255, 255, 0.65)',
+    textBody: '#ffffff',
     border: 'rgba(255, 255, 255, 0.10)',
     navBg: 'rgba(18, 20, 23, 0.75)',
     buttonOutlineBorder: 'rgba(255, 255, 255, 0.55)',
@@ -42,6 +44,7 @@ export const lightTheme: Theme = {
     text: '#0d0d0d',
     textMuted: 'rgba(0, 0, 0, 0.38)',
     textSecondary: 'rgba(0, 0, 0, 0.65)',
+    textBody: 'rgba(0, 0, 0, 0.65)',
     border: 'rgba(0, 0, 0, 0.10)',
     navBg: 'rgba(245, 244, 240, 0.75)',
     buttonOutlineBorder: 'rgba(0, 0, 0, 0.45)',

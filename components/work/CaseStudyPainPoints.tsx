@@ -75,9 +75,9 @@ const BulletList = styled.ul`
 
 const Bullet = styled.li`
   font-family: var(--font-body);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   line-height: 1.6;
-  color: ${({ theme }) => theme.colors.textSecondary};
+  color: ${({ theme }) => theme.colors.textBody};
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
