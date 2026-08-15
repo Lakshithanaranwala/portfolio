@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import styled from 'styled-components';
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -14,6 +15,13 @@ type Message = {
   subject: string;
   message: string;
   created_at: string;
+};
+
+type ShowcaseImage = {
+  id: string;
+  url: string;
+  alt: string;
+  order: number;
 };
 
 type StudySummary = {
@@ -482,6 +490,67 @@ const DeleteBtn = styled.button`
   &:hover { border-color: #e74c3c; color: #e74c3c; }
 `;
 
+/* ── Showcase ── */
+
+const ShowcaseGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+`;
+
+const ShowcaseCard = styled.div`
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #111;
+  border: 1px solid #1a1a1a;
+`;
+
+const ShowcaseThumb = styled.div`
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+`;
+
+const ShowcaseCardFooter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+`;
+
+const ShowcaseAlt = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+`;
+
+const UploadZone = styled.label<{ $uploading: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  border: 2px dashed ${({ $uploading }) => ($uploading ? '#FF6B35' : '#222')};
+  border-radius: 8px;
+  cursor: ${({ $uploading }) => ($uploading ? 'not-allowed' : 'pointer')};
+  transition: border-color 0.2s ease;
+  &:hover { border-color: #FF6B35; }
+`;
+
+const UploadText = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: #555;
+`;
+
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
 function toSlug(str: string) {
@@ -497,9 +566,12 @@ function toSlug(str: string) {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'studies' | 'messages'>('studies');
+  const [activeTab, setActiveTab] = useState<'studies' | 'messages' | 'showcase'>('studies');
   const [studies, setStudies] = useState<StudySummary[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [showcaseImages, setShowcaseImages] = useState<ShowcaseImage[]>([]);
+  const [showcaseUploading, setShowcaseUploading] = useState(false);
+  const showcaseInputRef = useRef<HTMLInputElement>(null);
   const [showModal, setShowModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newLabel, setNewLabel] = useState('');
@@ -519,7 +591,42 @@ export default function AdminDashboard() {
       .then((data) => { if (Array.isArray(data)) setMessages(data); });
   }
 
-  useEffect(() => { loadStudies(); loadMessages(); }, []);
+  function loadShowcase() {
+    fetch('/api/admin/showcase')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setShowcaseImages(data); });
+  }
+
+  useEffect(() => { loadStudies(); loadMessages(); loadShowcase(); }, []);
+
+  async function handleShowcaseUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setShowcaseUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const form = new FormData();
+        form.append('file', file);
+        const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: form });
+        const { url } = await uploadRes.json();
+        if (url) {
+          await fetch('/api/admin/showcase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, alt: file.name.replace(/\.[^.]+$/, '') }),
+          });
+        }
+      }
+      loadShowcase();
+    } finally {
+      setShowcaseUploading(false);
+      if (showcaseInputRef.current) showcaseInputRef.current.value = '';
+    }
+  }
+
+  async function deleteShowcaseImage(id: string) {
+    await fetch(`/api/admin/showcase/${id}`, { method: 'DELETE' });
+    loadShowcase();
+  }
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -608,6 +715,9 @@ export default function AdminDashboard() {
           <Tab $active={activeTab === 'messages'} onClick={() => setActiveTab('messages')}>
             Messages {messages.length > 0 && `(${messages.length})`}
           </Tab>
+          <Tab $active={activeTab === 'showcase'} onClick={() => setActiveTab('showcase')}>
+            Work Showcase
+          </Tab>
         </TabNav>
 
         {/* ── Messages Tab ── */}
@@ -640,6 +750,46 @@ export default function AdminDashboard() {
                 ))}
               </MsgList>
             )}
+          </>
+        )}
+
+        {/* ── Showcase Tab ── */}
+        {activeTab === 'showcase' && (
+          <>
+            <SectionHeader>
+              <SectionTitle>Work Showcase Images</SectionTitle>
+            </SectionHeader>
+
+            {showcaseImages.length > 0 && (
+              <ShowcaseGrid>
+                {showcaseImages.map((img) => (
+                  <ShowcaseCard key={img.id}>
+                    <ShowcaseThumb>
+                      <Image src={img.url} alt={img.alt} fill style={{ objectFit: 'cover' }} />
+                    </ShowcaseThumb>
+                    <ShowcaseCardFooter>
+                      <ShowcaseAlt>{img.alt || 'Untitled'}</ShowcaseAlt>
+                      <DeleteBtn onClick={() => deleteShowcaseImage(img.id)}>Delete</DeleteBtn>
+                    </ShowcaseCardFooter>
+                  </ShowcaseCard>
+                ))}
+              </ShowcaseGrid>
+            )}
+
+            <UploadZone $uploading={showcaseUploading}>
+              <input
+                ref={showcaseInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={(e) => handleShowcaseUpload(e.target.files)}
+                disabled={showcaseUploading}
+              />
+              <UploadText>
+                {showcaseUploading ? 'Uploading...' : 'Click to upload images (select multiple at once)'}
+              </UploadText>
+            </UploadZone>
           </>
         )}
 

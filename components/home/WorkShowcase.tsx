@@ -6,7 +6,6 @@ import styled from 'styled-components';
 
 /* ─── Constants ─────────────────────────────────────────────────────────── */
 
-const SLIDE_COUNT = 4;
 const SLIDE_DURATION = 4000;
 
 const ARC_SIZE = 56;
@@ -15,11 +14,13 @@ const CIRCUMFERENCE = 2 * Math.PI * ARC_RADIUS;
 
 const CURSOR_SIZE = 64;
 
-const SLIDES = [
-  { src: '/showcase/lasenda.png', alt: 'Lasenda Dashboard' },
-  { src: '/showcase/cpap.png', alt: 'Sleep & CPAP Center Dashboard' },
-  { src: '/showcase/ai-dashboard.png', alt: 'JXAI Workflow Dashboard' },
-  { src: '/showcase/lms.png', alt: 'CleanScan Dashboard' },
+type Slide = { id: string; url: string; alt: string };
+
+const FALLBACK_SLIDES: Slide[] = [
+  { id: '1', url: '/showcase/lasenda.png', alt: 'Lasenda Dashboard' },
+  { id: '2', url: '/showcase/cpap.png', alt: 'Sleep & CPAP Center Dashboard' },
+  { id: '3', url: '/showcase/ai-dashboard.png', alt: 'JXAI Workflow Dashboard' },
+  { id: '4', url: '/showcase/lms.png', alt: 'CleanScan Dashboard' },
 ];
 
 /* ─── Styled Components ─────────────────────────────────────────────────── */
@@ -118,9 +119,23 @@ const ShowcaseCursor = styled.div<{ $visible: boolean }>`
 /* ─── Component ──────────────────────────────────────────────────────────── */
 
 export default function WorkShowcase() {
+  const [slides, setSlides] = useState<Slide[]>(FALLBACK_SLIDES);
+  const slidesLenRef = useRef(FALLBACK_SLIDES.length);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [cursorVisible, setCursorVisible] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/showcase')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSlides(data);
+          slidesLenRef.current = data.length;
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const arcRef = useRef<SVGCircleElement>(null);
@@ -146,7 +161,7 @@ export default function WorkShowcase() {
 
         if (progressRef.current >= 1) {
           progressRef.current = 0;
-          setCurrentSlide((s) => (s + 1) % SLIDE_COUNT);
+          setCurrentSlide((s) => (s + 1) % slidesLenRef.current);
         }
 
         if (arcRef.current) {
@@ -204,10 +219,10 @@ export default function WorkShowcase() {
   return (
     <Section>
       <SlideWrapper ref={wrapperRef}>
-        {SLIDES.map((s, i) => (
-          <Slide key={i} $active={i === currentSlide}>
+        {slides.map((s, i) => (
+          <Slide key={s.id} $active={i === currentSlide}>
             <Image
-              src={s.src}
+              src={s.url}
               alt={s.alt}
               fill
               style={{ objectFit: 'cover' }}
