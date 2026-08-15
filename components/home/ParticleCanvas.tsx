@@ -120,7 +120,7 @@ export default function ParticleCanvas() {
   useEffect(() => { isDarkRef.current = isDark; }, [isDark]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
+    const canvas = canvasRef.current as HTMLCanvasElement;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
