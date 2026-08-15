@@ -31,7 +31,7 @@ const Wrapper = styled.div`
   z-index: 200;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.3rem;
 
   @media (max-width: 1024px) {
     display: none;
