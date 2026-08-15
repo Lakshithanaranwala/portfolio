@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import styled from 'styled-components';
 import type { CaseStudy } from '@/lib/caseStudies';
 
@@ -26,15 +27,19 @@ const Grid = styled.div`
   }
 `;
 
-const Col = styled.div``;
-
 const ColHeading = styled.h3`
   font-family: var(--font-body);
   font-size: 0.9375rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text};
-  margin-bottom: 0.75rem;
   transition: color 0.4s ease;
+`;
+
+const RowDivider = styled.div`
+  grid-column: 1 / -1;
+  height: 1px;
+  background: ${({ theme }) => theme.colors.border};
+  opacity: 0.4;
 `;
 
 const ColText = styled.p`
@@ -48,21 +53,23 @@ const ColText = styled.p`
 /* ─── Component ──────────────────────────────────────────────────────────── */
 
 export default function CaseStudyThreeColumn({ study }: { study: CaseStudy }) {
+  const rows = study.outcomeRows ?? [];
+
   return (
     <Section id="cs-outcomes">
       <Grid>
-        <Col>
-          <ColHeading>Problem</ColHeading>
-          <ColText>{study.problemColumn}</ColText>
-        </Col>
-        <Col>
-          <ColHeading>Solution</ColHeading>
-          <ColText>{study.solutionColumn}</ColText>
-        </Col>
-        <Col>
-          <ColHeading>UX Impact</ColHeading>
-          <ColText>{study.uxImpactColumn}</ColText>
-        </Col>
+        <ColHeading>Problem</ColHeading>
+        <ColHeading>Solution</ColHeading>
+        <ColHeading>UX Impact</ColHeading>
+
+        {rows.map((row, i) => (
+          <React.Fragment key={i}>
+            <RowDivider />
+            <ColText>{row.problem}</ColText>
+            <ColText>{row.solution}</ColText>
+            <ColText>{row.uxImpact}</ColText>
+          </React.Fragment>
+        ))}
       </Grid>
     </Section>
   );

@@ -59,9 +59,7 @@ export async function PUT(
     insights_body: body.insightsBody,
     design_body: body.designBody,
     content_images_2: body.contentImages2,
-    problem_column: body.problemColumn,
-    solution_column: body.solutionColumn,
-    ux_impact_column: body.uxImpactColumn,
+    outcome_rows: body.outcomeRows,
     delivery_body: body.deliveryBody,
     updated_at: new Date().toISOString(),
   };

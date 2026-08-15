@@ -6,7 +6,7 @@ import Link from 'next/link';
 import styled from 'styled-components';
 import dynamic from 'next/dynamic';
 import ImageUpload from '@/components/admin/ImageUpload';
-import type { OutcomeCard, PainPointGroup, CaseStudyImage } from '@/lib/caseStudies';
+import type { OutcomeCard, OutcomeRow, PainPointGroup, CaseStudyImage } from '@/lib/caseStudies';
 import { staticCaseStudies } from '@/lib/caseStudies';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
@@ -342,9 +342,7 @@ type FormState = {
   insightsBody: string;
   designBody: string;
   contentImages2: CaseStudyImage[];
-  problemColumn: string;
-  solutionColumn: string;
-  uxImpactColumn: string;
+  outcomeRows: OutcomeRow[];
   deliveryBody: string;
 };
 
@@ -384,9 +382,7 @@ function emptyForm(): FormState {
       { from: '#0f0e17', to: '#1a1a2e' },
       { from: '#1a1a2e', to: '#16213e' },
     ],
-    problemColumn: '',
-    solutionColumn: '',
-    uxImpactColumn: '',
+    outcomeRows: [{ problem: '', solution: '', uxImpact: '' }],
     deliveryBody: '',
   };
 }
@@ -414,9 +410,7 @@ function dbRowToForm(row: Record<string, unknown>): FormState {
     insightsBody: (row.insights_body as string) ?? '',
     designBody: (row.design_body as string) ?? '',
     contentImages2: (row.content_images_2 as CaseStudyImage[]) ?? [],
-    problemColumn: (row.problem_column as string) ?? '',
-    solutionColumn: (row.solution_column as string) ?? '',
-    uxImpactColumn: (row.ux_impact_column as string) ?? '',
+    outcomeRows: (row.outcome_rows as OutcomeRow[]) ?? [{ problem: '', solution: '', uxImpact: '' }],
     deliveryBody: (row.delivery_body as string) ?? '',
   };
 }
@@ -472,9 +466,7 @@ export default function CaseStudyEditor() {
           insightsBody: s.insightsBody,
           designBody: s.designBody,
           contentImages2: s.contentImages2,
-          problemColumn: s.problemColumn,
-          solutionColumn: s.solutionColumn,
-          uxImpactColumn: s.uxImpactColumn,
+          outcomeRows: s.outcomeRows,
           deliveryBody: s.deliveryBody,
         });
       }
@@ -954,29 +946,72 @@ export default function CaseStudyEditor() {
           {activeTab === 'outcomes' && (
             <>
               <TabTitle>Outcomes</TabTitle>
-              <TabSub>Three-column problem / solution / UX impact table.</TabSub>
+              <TabSub>Problem / Solution / UX Impact rows. Each row maps to one entry in the three-column table.</TabSub>
 
-              <Field>
-                <FieldLabel>Problem Column</FieldLabel>
-                <TextArea
-                  value={form.problemColumn}
-                  onChange={(e) => set('problemColumn', e.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Solution Column</FieldLabel>
-                <TextArea
-                  value={form.solutionColumn}
-                  onChange={(e) => set('solutionColumn', e.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>UX Impact Column</FieldLabel>
-                <TextArea
-                  value={form.uxImpactColumn}
-                  onChange={(e) => set('uxImpactColumn', e.target.value)}
-                />
-              </Field>
+              <CardGroup>
+                {form.outcomeRows.map((row, i) => (
+                  <OutcomeCardBox key={i}>
+                    <CardHeader>
+                      <CardNum>Row {i + 1}</CardNum>
+                      {form.outcomeRows.length > 1 && (
+                        <RemoveBtn
+                          type="button"
+                          onClick={() => {
+                            const next = form.outcomeRows.filter((_, idx) => idx !== i);
+                            set('outcomeRows', next);
+                          }}
+                        >
+                          Remove
+                        </RemoveBtn>
+                      )}
+                    </CardHeader>
+                    <Field>
+                      <FieldLabel>Problem</FieldLabel>
+                      <TextArea
+                        value={row.problem}
+                        onChange={(e) => {
+                          const next = [...form.outcomeRows];
+                          next[i] = { ...next[i], problem: e.target.value };
+                          set('outcomeRows', next);
+                        }}
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Solution</FieldLabel>
+                      <TextArea
+                        value={row.solution}
+                        onChange={(e) => {
+                          const next = [...form.outcomeRows];
+                          next[i] = { ...next[i], solution: e.target.value };
+                          set('outcomeRows', next);
+                        }}
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>UX Impact</FieldLabel>
+                      <TextArea
+                        value={row.uxImpact}
+                        onChange={(e) => {
+                          const next = [...form.outcomeRows];
+                          next[i] = { ...next[i], uxImpact: e.target.value };
+                          set('outcomeRows', next);
+                        }}
+                      />
+                    </Field>
+                  </OutcomeCardBox>
+                ))}
+                <AddBtn
+                  type="button"
+                  onClick={() =>
+                    set('outcomeRows', [
+                      ...form.outcomeRows,
+                      { problem: '', solution: '', uxImpact: '' },
+                    ])
+                  }
+                >
+                  + Add row
+                </AddBtn>
+              </CardGroup>
             </>
           )}
 

@@ -4,6 +4,7 @@ import './globals.css';
 import StyledComponentsRegistry from '@/lib/registry';
 import ThemeProvider from '@/components/providers/ThemeProvider';
 import LenisProvider from '@/components/providers/LenisProvider';
+import IntroLoader from '@/components/ui/IntroLoader';
 
 const displayFont = Cormorant_Garamond({
   variable: '--font-display',
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       <body suppressHydrationWarning>
         <StyledComponentsRegistry>
           <ThemeProvider>
+            <IntroLoader />
             <LenisProvider>{children}</LenisProvider>
           </ThemeProvider>
         </StyledComponentsRegistry>

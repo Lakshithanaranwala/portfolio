@@ -19,6 +19,12 @@ export type OutcomeCard = {
   description: string;
 };
 
+export type OutcomeRow = {
+  problem: string;
+  solution: string;
+  uxImpact: string;
+};
+
 export type CaseStudy = {
   slug: string;
   label: string;
@@ -42,9 +48,7 @@ export type CaseStudy = {
   insightsBody: string;
   designBody: string;
   contentImages2: CaseStudyImage[];
-  problemColumn: string;
-  solutionColumn: string;
-  uxImpactColumn: string;
+  outcomeRows: OutcomeRow[];
   deliveryBody: string;
 };
 
@@ -105,7 +109,18 @@ const placeholderOutcome: OutcomeCard[] = [
   },
 ];
 
-const placeholderColumn = "Users don't know what's pending, what's ongoing, or what's completed. Users struggle to identify what needs urgent attention. Updates and conversations are spread across emails, chats, and calls. Users don't know who is responsible for what.";
+const placeholderOutcomeRows: OutcomeRow[] = [
+  {
+    problem: "Users don't know what's pending, what's ongoing, or what's completed.",
+    solution: 'Introduced a unified task dashboard with clear status indicators and ownership labels.',
+    uxImpact: 'Task visibility increased significantly, reducing missed deadlines and confusion.',
+  },
+  {
+    problem: 'Updates and conversations are spread across emails, chats, and calls.',
+    solution: 'Centralised communication into a single contextual thread per task.',
+    uxImpact: 'Teams reported fewer miscommunications and faster resolution times.',
+  },
+];
 
 /* ─── Static fallback data ───────────────────────────────────────────────── */
 
@@ -131,9 +146,7 @@ export const staticCaseStudies: CaseStudy[] = [
     insightsBody: placeholderSingleBody,
     designBody: placeholderSingleBody,
     contentImages2: [{ from: '#16213e', to: '#0f3460' }, { from: '#0f3460', to: '#1a1a2e' }],
-    problemColumn: placeholderColumn,
-    solutionColumn: placeholderColumn,
-    uxImpactColumn: placeholderColumn,
+    outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
   },
   {
@@ -157,9 +170,7 @@ export const staticCaseStudies: CaseStudy[] = [
     insightsBody: placeholderSingleBody,
     designBody: placeholderSingleBody,
     contentImages2: [{ from: '#2d1b69', to: '#553c9a' }, { from: '#1a1a2e', to: '#2d1b69' }],
-    problemColumn: placeholderColumn,
-    solutionColumn: placeholderColumn,
-    uxImpactColumn: placeholderColumn,
+    outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
   },
   {
@@ -183,9 +194,7 @@ export const staticCaseStudies: CaseStudy[] = [
     insightsBody: placeholderSingleBody,
     designBody: placeholderSingleBody,
     contentImages2: [{ from: '#0d2b1f', to: '#1a4a35' }, { from: '#1a3a2e', to: '#0d2b1f' }],
-    problemColumn: placeholderColumn,
-    solutionColumn: placeholderColumn,
-    uxImpactColumn: placeholderColumn,
+    outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
   },
   {
@@ -209,9 +218,7 @@ export const staticCaseStudies: CaseStudy[] = [
     insightsBody: placeholderSingleBody,
     designBody: placeholderSingleBody,
     contentImages2: [{ from: '#5c1a1a', to: '#8b3a3a' }, { from: '#3a1a1a', to: '#5c1a1a' }],
-    problemColumn: placeholderColumn,
-    solutionColumn: placeholderColumn,
-    uxImpactColumn: placeholderColumn,
+    outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
   },
 ];
@@ -241,9 +248,7 @@ function dbToCase(row: Record<string, unknown>): CaseStudy {
     insightsBody: (row.insights_body as string) ?? '',
     designBody: (row.design_body as string) ?? '',
     contentImages2: (row.content_images_2 as CaseStudyImage[]) ?? [],
-    problemColumn: (row.problem_column as string) ?? '',
-    solutionColumn: (row.solution_column as string) ?? '',
-    uxImpactColumn: (row.ux_impact_column as string) ?? '',
+    outcomeRows: (row.outcome_rows as OutcomeRow[]) ?? [],
     deliveryBody: (row.delivery_body as string) ?? '',
   };
 }
