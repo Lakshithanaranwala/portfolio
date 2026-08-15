@@ -31,7 +31,7 @@ const SCATTER_DRIFT_MS  = 4000;   // random drift after scatter
 const PULL_MS           = 3000;   // gravity pull back to word
 const PULL_LERP         = 0.018;  // slow gravity feel
 const INITIAL_DELAY_MS  = 0;
-const DEFAULT_WORDS     = ['Hi', 'UI', 'UX'];
+const DEFAULT_WORDS     = ['Hi', 'I', '♥', 'UI', 'UX', '&', 'figma'];
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -59,6 +59,51 @@ function makeParticle(w: number, h: number, id: number): Particle {
   };
 }
 
+function drawFigmaIcon(ctx: CanvasRenderingContext2D, cw: number, ch: number, size: number, pad: number) {
+  const s  = size * 0.38;   // cell size
+  const g  = size * 0.07;   // gap between cells
+  const lw = Math.max(6, s * 0.13);
+  const r  = s * 0.38;      // corner radius
+
+  const totalW = 2 * s + g;
+  const totalH = 3 * s + 2 * g;
+  const x0 = cw - pad - totalW;
+  const y0 = ch - pad - totalH;
+
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth   = lw;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+
+  function rrect(x: number, y: number, w: number, h: number, cr: number) {
+    ctx.beginPath();
+    ctx.moveTo(x + cr, y);
+    ctx.lineTo(x + w - cr, y);
+    ctx.arcTo(x + w, y, x + w, y + cr, cr);
+    ctx.lineTo(x + w, y + h - cr);
+    ctx.arcTo(x + w, y + h, x + w - cr, y + h, cr);
+    ctx.lineTo(x + cr, y + h);
+    ctx.arcTo(x, y + h, x, y + h - cr, cr);
+    ctx.lineTo(x, y + cr);
+    ctx.arcTo(x, y, x + cr, y, cr);
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Top-left cell
+  rrect(x0, y0, s, s, r);
+  // Top-right cell
+  rrect(x0 + s + g, y0, s, s, r);
+  // Middle-left cell
+  rrect(x0, y0 + s + g, s, s, r);
+  // Middle-right: circle
+  ctx.beginPath();
+  ctx.arc(x0 + s + g + s / 2, y0 + s + g + s / 2, s / 2, 0, Math.PI * 2);
+  ctx.stroke();
+  // Bottom-left cell
+  rrect(x0, y0 + 2 * (s + g), s, s, r);
+}
+
 function sampleTargets(
   word: string,
   cw: number,
@@ -75,18 +120,24 @@ function sampleTargets(
   const fontSize = Math.min(cw * 0.40, ch * 0.62);
   const pad = 28;
 
-  // Use a heavy sans-serif for symbols (e.g. ↓), display serif for text
-  const isSymbol = /^\P{L}+$/u.test(word);
-  const font = isSymbol
-    ? `900 ${fontSize}px Arial, sans-serif`
-    : `300 ${fontSize}px 'Cormorant Garamond', serif`;
-
   ctx.clearRect(0, 0, cw, ch);
-  ctx.font = font;
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'bottom';
-  ctx.fillStyle = '#fff';
-  ctx.fillText(word, cw - pad, ch - pad);
+
+  const rightOffset = (word === 'I' || word === '♥' || word === '&' || word === 'figma') ? 200 : pad;
+
+  if (word === 'figma') {
+    drawFigmaIcon(ctx, cw, ch, fontSize * 0.6, rightOffset);
+  } else {
+    // & stays in display serif; ♥ and other pure symbols use heavy sans-serif
+    const isSymbol = word !== '&' && /^\P{L}+$/u.test(word);
+    const font = isSymbol
+      ? `900 ${fontSize}px Arial, sans-serif`
+      : `300 ${fontSize}px 'Cormorant Garamond', serif`;
+    ctx.font = font;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(word, cw - rightOffset, ch - pad);
+  }
 
   const { data } = ctx.getImageData(0, 0, cw, ch);
   const pts: { x: number; y: number }[] = [];
