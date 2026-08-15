@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { notFound } from 'next/navigation';
 import { getCaseStudy } from '@/lib/caseStudies';
 import CaseStudyHero from '@/components/work/CaseStudyHero';

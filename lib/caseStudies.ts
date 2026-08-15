@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, createAdminClient } from '@/lib/supabase';
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -23,6 +23,16 @@ export type OutcomeRow = {
   problem: string;
   solution: string;
   uxImpact: string;
+};
+
+export type SelectedWorkCard = {
+  slug: string;
+  cardTitle: string;
+  cardCategory: string;
+  cardImages: string[];
+  cardSlideshow: boolean;
+  heroBgFrom: string;
+  heroBgTo: string;
 };
 
 export type CaseStudy = {
@@ -50,6 +60,13 @@ export type CaseStudy = {
   contentImages2: CaseStudyImage[];
   outcomeRows: OutcomeRow[];
   deliveryBody: string;
+  archived: boolean;
+  selectedWork: boolean;
+  selectedWorkOrder: number | null;
+  cardTitle: string;
+  cardCategory: string;
+  cardImages: string[];
+  cardSlideshow: boolean;
 };
 
 /* ─── Shared placeholder content ─────────────────────────────────────────── */
@@ -148,6 +165,13 @@ export const staticCaseStudies: CaseStudy[] = [
     contentImages2: [{ from: '#16213e', to: '#0f3460' }, { from: '#0f3460', to: '#1a1a2e' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
+    archived: false,
+    selectedWork: true,
+    selectedWorkOrder: 0,
+    cardTitle: 'Veevoy Web',
+    cardCategory: 'Website · Branding',
+    cardImages: [],
+    cardSlideshow: true,
   },
   {
     slug: 'eqvista-app',
@@ -172,6 +196,13 @@ export const staticCaseStudies: CaseStudy[] = [
     contentImages2: [{ from: '#2d1b69', to: '#553c9a' }, { from: '#1a1a2e', to: '#2d1b69' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
+    archived: false,
+    selectedWork: true,
+    selectedWorkOrder: 1,
+    cardTitle: 'Eqvista App',
+    cardCategory: 'Mobile App · UX Design',
+    cardImages: [],
+    cardSlideshow: false,
   },
   {
     slug: 'ascend-design-system',
@@ -196,6 +227,13 @@ export const staticCaseStudies: CaseStudy[] = [
     contentImages2: [{ from: '#0d2b1f', to: '#1a4a35' }, { from: '#1a3a2e', to: '#0d2b1f' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
+    archived: false,
+    selectedWork: true,
+    selectedWorkOrder: 2,
+    cardTitle: 'Ascend Design System',
+    cardCategory: 'Component Library · Strategy',
+    cardImages: [],
+    cardSlideshow: false,
   },
   {
     slug: 'solaris-brand',
@@ -220,6 +258,13 @@ export const staticCaseStudies: CaseStudy[] = [
     contentImages2: [{ from: '#5c1a1a', to: '#8b3a3a' }, { from: '#3a1a1a', to: '#5c1a1a' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
+    archived: false,
+    selectedWork: true,
+    selectedWorkOrder: 3,
+    cardTitle: 'Solaris Brand Identity',
+    cardCategory: 'Visual Identity · Strategy',
+    cardImages: [],
+    cardSlideshow: false,
   },
 ];
 
@@ -250,30 +295,84 @@ function dbToCase(row: Record<string, unknown>): CaseStudy {
     contentImages2: (row.content_images_2 as CaseStudyImage[]) ?? [],
     outcomeRows: (row.outcome_rows as OutcomeRow[]) ?? [],
     deliveryBody: (row.delivery_body as string) ?? '',
+    archived: (row.archived as boolean) ?? false,
+    selectedWork: (row.selected_work as boolean) ?? false,
+    selectedWorkOrder: (row.selected_work_order as number | null) ?? null,
+    cardTitle: (row.card_title as string) ?? '',
+    cardCategory: (row.card_category as string) ?? '',
+    cardImages: (row.card_images as string[]) ?? [],
+    cardSlideshow: (row.card_slideshow as boolean) ?? false,
   };
 }
 
 export async function getCaseStudy(slug: string): Promise<CaseStudy | undefined> {
-  if (supabase) {
+  const adminClient = createAdminClient();
+  if (adminClient) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await adminClient
         .from('case_studies')
         .select('*')
         .eq('slug', slug)
         .single();
 
-      if (!error && data) return dbToCase(data);
+      if (!error && data) {
+        const study = dbToCase(data);
+        if (study.archived) return undefined;
+        return study;
+      }
     } catch {
       // fall through to static
     }
   }
-  return staticCaseStudies.find((s) => s.slug === slug);
+  return staticCaseStudies.find((s) => s.slug === slug && !s.archived);
+}
+
+export async function getSelectedWork(): Promise<SelectedWorkCard[]> {
+  const adminClient = createAdminClient();
+  if (adminClient) {
+    try {
+      const { data, error } = await adminClient
+        .from('case_studies')
+        .select('slug, card_title, card_category, card_images, card_slideshow, hero_bg_from, hero_bg_to, selected_work_order')
+        .eq('selected_work', true)
+        .neq('archived', true)
+        .order('selected_work_order', { ascending: true });
+
+      if (!error && data) {
+        return data.map((row) => ({
+          slug: row.slug as string,
+          cardTitle: (row.card_title as string) || '',
+          cardCategory: (row.card_category as string) || '',
+          cardImages: (row.card_images as string[]) || [],
+          cardSlideshow: (row.card_slideshow as boolean) || false,
+          heroBgFrom: (row.hero_bg_from as string) || '#0f0e17',
+          heroBgTo: (row.hero_bg_to as string) || '#1a1a2e',
+        }));
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  return staticCaseStudies
+    .filter((s) => s.selectedWork && !s.archived)
+    .sort((a, b) => (a.selectedWorkOrder ?? 999) - (b.selectedWorkOrder ?? 999))
+    .map((s) => ({
+      slug: s.slug,
+      cardTitle: s.cardTitle || s.label,
+      cardCategory: s.cardCategory || s.scope,
+      cardImages: s.cardImages,
+      cardSlideshow: s.cardSlideshow,
+      heroBgFrom: s.heroBg.from,
+      heroBgTo: s.heroBg.to,
+    }));
 }
 
 export async function getAllCaseStudies(): Promise<CaseStudy[]> {
-  if (supabase) {
+  const adminClient = createAdminClient();
+  if (adminClient) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await adminClient
         .from('case_studies')
         .select('*')
         .order('created_at', { ascending: true });

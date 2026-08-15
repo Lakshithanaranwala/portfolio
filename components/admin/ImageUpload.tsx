@@ -81,16 +81,24 @@ type Props = {
 export default function ImageUpload({ value, onChange, label }: Props) {
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function uploadFile(file: File) {
     setUploading(true);
+    setError('');
     try {
       const form = new FormData();
       form.append('file', file);
       const res = await fetch('/api/admin/upload', { method: 'POST', body: form });
       const json = await res.json();
-      if (json.url) onChange(json.url);
+      if (json.url) {
+        onChange(json.url);
+      } else {
+        setError(json.error ?? 'Upload failed');
+      }
+    } catch {
+      setError('Upload failed — check your Blob token');
     } finally {
       setUploading(false);
     }
@@ -104,6 +112,7 @@ export default function ImageUpload({ value, onChange, label }: Props) {
   return (
     <Wrapper>
       {label && <StatusText>{label}</StatusText>}
+      {error && <StatusText style={{ color: '#e74c3c' }}>{error}</StatusText>}
 
       {value ? (
         <>

@@ -61,10 +61,16 @@ export async function PUT(
     content_images_2: body.contentImages2,
     outcome_rows: body.outcomeRows,
     delivery_body: body.deliveryBody,
+    archived: body.archived,
+    selected_work: body.selectedWork,
+    selected_work_order: body.selectedWorkOrder,
+    card_title: body.cardTitle,
+    card_category: body.cardCategory,
+    card_images: body.cardImages,
+    card_slideshow: body.cardSlideshow,
     updated_at: new Date().toISOString(),
   };
 
-  // Try update first; if no row exists, insert
   const { data: existing } = await supabase
     .from('case_studies')
     .select('slug')
@@ -86,5 +92,38 @@ export async function PUT(
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  return NextResponse.json({ success: true });
+}
+
+// Partial update — used by dashboard for archive/selected_work/order changes
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params;
+  const body = await request.json();
+  const supabase = createAdminClient();
+
+  if (!supabase) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
+  }
+
+  const allowed: Record<string, string> = {
+    archived: 'archived',
+    selectedWork: 'selected_work',
+    selectedWorkOrder: 'selected_work_order',
+  };
+
+  const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  for (const [key, col] of Object.entries(allowed)) {
+    if (key in body) updateData[col] = body[key];
+  }
+
+  const { error } = await supabase
+    .from('case_studies')
+    .update(updateData)
+    .eq('slug', slug);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

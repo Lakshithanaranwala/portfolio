@@ -5,15 +5,20 @@ import SelectedWork from '@/components/home/SelectedWork';
 import WhatIDo from '@/components/home/WhatIDo';
 import KindWords from '@/components/home/KindWords';
 import Footer from '@/components/layout/Footer';
+import { getSelectedWork } from '@/lib/caseStudies';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const selectedWork = await getSelectedWork();
+
   return (
     <>
       <Navbar />
       <main>
         <Hero />
         <WorkShowcase />
-        <SelectedWork />
+        <SelectedWork cards={selectedWork} />
         <WhatIDo />
         <KindWords />
       </main>

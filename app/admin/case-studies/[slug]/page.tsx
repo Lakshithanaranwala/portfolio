@@ -305,6 +305,70 @@ const ErrorMsg = styled.p`
   background: #1a0808;
 `;
 
+const ToggleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  background: #111;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+`;
+
+const ToggleLabel = styled.div``;
+
+const ToggleName = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: #fff;
+`;
+
+const ToggleDesc = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: #444;
+  margin-top: 0.15rem;
+`;
+
+const Toggle = styled.button<{ $on: boolean }>`
+  width: 40px;
+  height: 22px;
+  border-radius: 100px;
+  border: none;
+  background: ${({ $on }) => ($on ? '#FF6B35' : '#222')};
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: ${({ $on }) => ($on ? '21px' : '3px')};
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.2s ease;
+  }
+`;
+
+const SmallInput = styled.input`
+  width: 80px;
+  padding: 0.4rem 0.6rem;
+  background: #0a0a0a;
+  border: 1px solid #222;
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  outline: none;
+  text-align: center;
+  &:focus { border-color: #FF6B35; }
+`;
+
 /* ─── Tabs ───────────────────────────────────────────────────────────────── */
 
 const TABS = [
@@ -316,6 +380,7 @@ const TABS = [
   { key: 'design', label: 'Design' },
   { key: 'outcomes', label: 'Outcomes' },
   { key: 'delivery', label: 'Delivery' },
+  { key: 'card', label: 'Homepage Card' },
 ];
 
 /* ─── Form state type ────────────────────────────────────────────────────── */
@@ -344,6 +409,13 @@ type FormState = {
   contentImages2: CaseStudyImage[];
   outcomeRows: OutcomeRow[];
   deliveryBody: string;
+  archived: boolean;
+  selectedWork: boolean;
+  selectedWorkOrder: number | null;
+  cardTitle: string;
+  cardCategory: string;
+  cardImages: string[];
+  cardSlideshow: boolean;
 };
 
 function emptyForm(): FormState {
@@ -384,6 +456,13 @@ function emptyForm(): FormState {
     ],
     outcomeRows: [{ problem: '', solution: '', uxImpact: '' }],
     deliveryBody: '',
+    archived: false,
+    selectedWork: false,
+    selectedWorkOrder: null,
+    cardTitle: '',
+    cardCategory: '',
+    cardImages: [],
+    cardSlideshow: false,
   };
 }
 
@@ -412,6 +491,13 @@ function dbRowToForm(row: Record<string, unknown>): FormState {
     contentImages2: (row.content_images_2 as CaseStudyImage[]) ?? [],
     outcomeRows: (row.outcome_rows as OutcomeRow[]) ?? [{ problem: '', solution: '', uxImpact: '' }],
     deliveryBody: (row.delivery_body as string) ?? '',
+    archived: (row.archived as boolean) ?? false,
+    selectedWork: (row.selected_work as boolean) ?? false,
+    selectedWorkOrder: (row.selected_work_order as number | null) ?? null,
+    cardTitle: (row.card_title as string) ?? '',
+    cardCategory: (row.card_category as string) ?? '',
+    cardImages: (row.card_images as string[]) ?? [],
+    cardSlideshow: (row.card_slideshow as boolean) ?? false,
   };
 }
 
@@ -468,6 +554,13 @@ export default function CaseStudyEditor() {
           contentImages2: s.contentImages2,
           outcomeRows: s.outcomeRows,
           deliveryBody: s.deliveryBody,
+          archived: s.archived,
+          selectedWork: s.selectedWork,
+          selectedWorkOrder: s.selectedWorkOrder,
+          cardTitle: s.cardTitle,
+          cardCategory: s.cardCategory,
+          cardImages: s.cardImages,
+          cardSlideshow: s.cardSlideshow,
         });
       }
       setLoading(false);
@@ -549,6 +642,38 @@ export default function CaseStudyEditor() {
             <>
               <TabTitle>Hero</TabTitle>
               <TabSub>Title, metadata, hero image and final outcome cards.</TabSub>
+
+              <ToggleRow>
+                <ToggleLabel>
+                  <ToggleName>Archived</ToggleName>
+                  <ToggleDesc>Hides this case study from the site entirely.</ToggleDesc>
+                </ToggleLabel>
+                <Toggle $on={form.archived} onClick={() => set('archived', !form.archived)} />
+              </ToggleRow>
+
+              <ToggleRow>
+                <ToggleLabel>
+                  <ToggleName>Selected Work</ToggleName>
+                  <ToggleDesc>Show this on the homepage selected work grid.</ToggleDesc>
+                </ToggleLabel>
+                <Toggle $on={form.selectedWork} onClick={() => set('selectedWork', !form.selectedWork)} />
+              </ToggleRow>
+
+              {form.selectedWork && (
+                <Field>
+                  <FieldLabel>Display Order (0 = first)</FieldLabel>
+                  <SmallInput
+                    type="number"
+                    min={0}
+                    value={form.selectedWorkOrder ?? ''}
+                    onChange={(e) =>
+                      set('selectedWorkOrder', e.target.value === '' ? null : Number(e.target.value))
+                    }
+                  />
+                </Field>
+              )}
+
+              <Divider />
 
               <TwoCol>
                 <Field>
@@ -1029,6 +1154,83 @@ export default function CaseStudyEditor() {
                   placeholder="Describe the delivery and handoff..."
                 />
               </Field>
+            </>
+          )}
+
+          {/* ── Homepage Card Tab ─────────────────────────────────────── */}
+          {activeTab === 'card' && (
+            <>
+              <TabTitle>Homepage Card</TabTitle>
+              <TabSub>Controls how this case study appears in the Selected Work grid on the homepage.</TabSub>
+
+              <Field>
+                <FieldLabel>Card Title</FieldLabel>
+                <TextInput
+                  value={form.cardTitle}
+                  onChange={(e) => set('cardTitle', e.target.value)}
+                  placeholder="e.g. Veevoy Web"
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel>Card Category</FieldLabel>
+                <TextInput
+                  value={form.cardCategory}
+                  onChange={(e) => set('cardCategory', e.target.value)}
+                  placeholder="e.g. Website · Branding"
+                />
+              </Field>
+
+              <Divider />
+
+              <ToggleRow>
+                <ToggleLabel>
+                  <ToggleName>Image Slideshow</ToggleName>
+                  <ToggleDesc>Cycles through multiple images automatically. Only applies when 2+ images are uploaded.</ToggleDesc>
+                </ToggleLabel>
+                <Toggle
+                  $on={form.cardSlideshow}
+                  onClick={() => set('cardSlideshow', !form.cardSlideshow)}
+                />
+              </ToggleRow>
+
+              <Divider />
+
+              <FieldLabel style={{ display: 'block', marginBottom: '1rem' }}>
+                Card Images
+              </FieldLabel>
+              <CardGroup>
+                {form.cardImages.map((src, i) => (
+                  <OutcomeCardBox key={i}>
+                    <CardHeader>
+                      <CardNum>Image {i + 1}</CardNum>
+                      <RemoveBtn
+                        type="button"
+                        onClick={() => {
+                          const next = form.cardImages.filter((_, idx) => idx !== i);
+                          set('cardImages', next);
+                        }}
+                      >
+                        Remove
+                      </RemoveBtn>
+                    </CardHeader>
+                    <ImageUpload
+                      value={src}
+                      onChange={(url) => {
+                        const next = [...form.cardImages];
+                        next[i] = url;
+                        set('cardImages', next);
+                      }}
+                    />
+                  </OutcomeCardBox>
+                ))}
+                <AddBtn
+                  type="button"
+                  onClick={() => set('cardImages', [...form.cardImages, ''])}
+                >
+                  + Add image
+                </AddBtn>
+              </CardGroup>
             </>
           )}
         </EditorArea>

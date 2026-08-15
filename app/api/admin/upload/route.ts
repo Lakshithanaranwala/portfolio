@@ -14,9 +14,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
   }
 
-  const blob = await put(`case-studies/${Date.now()}-${file.name}`, file, {
-    access: 'public',
-  });
-
-  return NextResponse.json({ url: blob.url });
+  try {
+    const blob = await put(`case-studies/${Date.now()}-${file.name}`, file, {
+      access: 'public',
+    });
+    return NextResponse.json({ url: blob.url });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Upload failed';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

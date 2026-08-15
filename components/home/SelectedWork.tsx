@@ -4,43 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styled from 'styled-components';
 import { useArrowCursor, ArrowCursorEl, ArrowIcon } from '@/components/ui/ArrowCursor';
-
-/* ─── Data ───────────────────────────────────────────────────────────────── */
-
-const projects = [
-  {
-    slug: 'veevoy-web',
-    title: 'Veevoy Web',
-    category: 'Website · Branding',
-    slideshow: true,
-    slides: [
-      { from: '#0f0e17', to: '#1a1a2e' },
-      { from: '#1a1a2e', to: '#16213e' },
-      { from: '#16213e', to: '#0f3460' },
-    ],
-  },
-  {
-    slug: 'eqvista-app',
-    title: 'Eqvista App',
-    category: 'Mobile App · UX Design',
-    slideshow: false,
-    slides: [{ from: '#0d1b2a', to: '#1b263b' }],
-  },
-  {
-    slug: 'ascend-design-system',
-    title: 'Ascend Design System',
-    category: 'Component Library · Strategy',
-    slideshow: false,
-    slides: [{ from: '#1a3a2e', to: '#2d6a4f' }],
-  },
-  {
-    slug: 'solaris-brand',
-    title: 'Solaris Brand Identity',
-    category: 'Visual Identity · Strategy',
-    slideshow: false,
-    slides: [{ from: '#3a1a1a', to: '#6b2d2d' }],
-  },
-] as const;
+import type { SelectedWorkCard } from '@/lib/caseStudies';
 
 /* ─── Styled Components ─────────────────────────────────────────────────── */
 
@@ -102,12 +66,20 @@ const ImageArea = styled.div`
   background: ${({ theme }) => theme.colors.border};
 `;
 
-const SlideFrame = styled.div<{ $active: boolean; $from: string; $to: string }>`
+const SlideImg = styled.img<{ $active: boolean }>`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: ${({ $active }) => ($active ? 1 : 0)};
+  transition: opacity 0.9s ease;
+`;
+
+const GradientFallback = styled.div<{ $from: string; $to: string }>`
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, ${({ $from }) => $from}, ${({ $to }) => $to});
-  opacity: ${({ $active }) => ($active ? 1 : 0)};
-  transition: opacity 0.9s ease;
 `;
 
 const CardMeta = styled.div`
@@ -159,34 +131,39 @@ const ViewAllLink = styled(Link)`
 
 /* ─── WorkCard sub-component ─────────────────────────────────────────────── */
 
-type Project = (typeof projects)[number];
-
-function WorkCard({ project }: { project: Project }) {
+function WorkCard({ card }: { card: SelectedWorkCard }) {
   const [slide, setSlide] = useState(0);
+  const images = card.cardImages.filter(Boolean);
+  const hasImages = images.length > 0;
+  const isSlideshow = card.cardSlideshow && images.length > 1;
 
   useEffect(() => {
-    if (!project.slideshow) return;
+    if (!isSlideshow) return;
     const timer = setInterval(() => {
-      setSlide((s) => (s + 1) % project.slides.length);
+      setSlide((s) => (s + 1) % images.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, [project.slideshow, project.slides.length]);
+  }, [isSlideshow, images.length]);
 
   return (
-    <CardRoot href={`/work/${project.slug}`}>
+    <CardRoot href={`/work/${card.slug}`}>
       <ImageArea>
-        {project.slides.map((s, i) => (
-          <SlideFrame
-            key={i}
-            $active={project.slideshow ? i === slide : true}
-            $from={s.from}
-            $to={s.to}
-          />
-        ))}
+        {hasImages ? (
+          images.map((src, i) => (
+            <SlideImg
+              key={i}
+              src={src}
+              alt={card.cardTitle}
+              $active={isSlideshow ? i === slide : i === 0}
+            />
+          ))
+        ) : (
+          <GradientFallback $from={card.heroBgFrom} $to={card.heroBgTo} />
+        )}
       </ImageArea>
       <CardMeta>
-        <CardTitle>{project.title}</CardTitle>
-        <CardCategory>{project.category}</CardCategory>
+        <CardTitle>{card.cardTitle}</CardTitle>
+        <CardCategory>{card.cardCategory}</CardCategory>
       </CardMeta>
     </CardRoot>
   );
@@ -194,7 +171,7 @@ function WorkCard({ project }: { project: Project }) {
 
 /* ─── Main Component ─────────────────────────────────────────────────────── */
 
-export default function SelectedWork() {
+export default function SelectedWork({ cards }: { cards: SelectedWorkCard[] }) {
   const { containerRef, cursorRef, cursorVisible } = useArrowCursor();
 
   return (
@@ -202,8 +179,8 @@ export default function SelectedWork() {
       <Heading>Selected Work</Heading>
 
       <Grid ref={containerRef}>
-        {projects.map((p) => (
-          <WorkCard key={p.slug} project={p} />
+        {cards.map((card) => (
+          <WorkCard key={card.slug} card={card} />
         ))}
       </Grid>
 

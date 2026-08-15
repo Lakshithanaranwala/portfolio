@@ -5,6 +5,19 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 
+/* ─── Types ──────────────────────────────────────────────────────────────── */
+
+type StudySummary = {
+  slug: string;
+  label: string;
+  title: string;
+  scope: string;
+  year: string;
+  archived: boolean;
+  selected_work: boolean;
+  selected_work_order: number | null;
+};
+
 /* ─── Styled Components ─────────────────────────────────────────────────── */
 
 const Page = styled.div`
@@ -39,34 +52,136 @@ const LogoutBtn = styled.button`
   font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.2s ease;
-
-  &:hover {
-    border-color: #e74c3c;
-    color: #e74c3c;
-  }
+  &:hover { border-color: #e74c3c; color: #e74c3c; }
 `;
 
 const Content = styled.div`
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 3rem 2rem;
 `;
 
-const PageTitle = styled.h1`
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 300;
-  letter-spacing: -0.02em;
-  color: #fff;
-  margin-bottom: 0.5rem;
+const SectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
 `;
 
-const PageSub = styled.p`
+const SectionTitle = styled.h2`
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #444;
+`;
+
+const NewBtn = styled.button`
+  padding: 0.5rem 1.25rem;
+  background: #FF6B35;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  &:hover { background: #e05a26; }
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  background: #1a1a1a;
+  margin: 2.5rem 0;
+`;
+
+/* ── Selected work list ── */
+
+const OrderList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const OrderRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  background: #111;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+`;
+
+const OrderNum = styled.span`
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: #333;
+  width: 1.5rem;
+  flex-shrink: 0;
+  text-align: center;
+`;
+
+const OrderInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const OrderTitle = styled.p`
   font-family: var(--font-body);
   font-size: 0.9375rem;
-  color: #555;
-  margin-bottom: 3rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
+
+const OrderScope = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: #444;
+  margin-top: 0.1rem;
+`;
+
+const OrderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+`;
+
+const IconBtn = styled.button<{ $danger?: boolean }>`
+  padding: 0.3rem 0.6rem;
+  background: none;
+  border: 1px solid #222;
+  border-radius: 4px;
+  color: #555;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  &:hover {
+    border-color: ${({ $danger }) => ($danger ? '#e74c3c' : '#FF6B35')};
+    color: ${({ $danger }) => ($danger ? '#e74c3c' : '#FF6B35')};
+  }
+  &:disabled { opacity: 0.2; cursor: default; }
+`;
+
+const EditLink = styled(Link)`
+  padding: 0.3rem 0.75rem;
+  background: none;
+  border: 1px solid #222;
+  border-radius: 4px;
+  color: #555;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  &:hover { border-color: #555; color: #fff; }
+`;
+
+/* ── All studies grid ── */
 
 const Grid = styled.div`
   display: grid;
@@ -74,19 +189,34 @@ const Grid = styled.div`
   gap: 1rem;
 `;
 
-const StudyCard = styled(Link)`
+const StudyCard = styled(Link)<{ $archived?: boolean }>`
   display: block;
   padding: 1.5rem;
   background: #111;
   border: 1px solid #1a1a1a;
   border-radius: 10px;
   text-decoration: none;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  opacity: ${({ $archived }) => ($archived ? 0.45 : 1)};
+  transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+  &:hover { border-color: #FF6B35; background: #141414; opacity: 1; }
+`;
 
-  &:hover {
-    border-color: #FF6B35;
-    background: #141414;
-  }
+const CardBadge = styled.span`
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #FF6B35;
+  border: 1px solid rgba(255,107,53,0.3);
+  border-radius: 100px;
+  padding: 0.15rem 0.5rem;
+  margin-bottom: 0.5rem;
+`;
+
+const ArchivedBadge = styled(CardBadge)`
+  color: #555;
+  border-color: #333;
 `;
 
 const CardScope = styled.p`
@@ -94,7 +224,7 @@ const CardScope = styled.p`
   font-size: 0.6875rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #FF6B35;
+  color: #555;
   margin-bottom: 0.5rem;
 `;
 
@@ -120,35 +250,221 @@ const EditArrow = styled.span`
   font-size: 0.75rem;
   color: #333;
   transition: color 0.2s ease;
-
-  ${StudyCard}:hover & {
-    color: #FF6B35;
-  }
+  ${StudyCard}:hover & { color: #FF6B35; }
 `;
 
-/* ─── Component ──────────────────────────────────────────────────────────── */
+const EmptyNote = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: #333;
+  padding: 1.5rem 0;
+`;
 
-type StudySummary = {
-  slug: string;
-  label: string;
-  title: string;
-  scope: string;
-  year: string;
-};
+/* ── Create modal ── */
+
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Modal = styled.div`
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 440px;
+`;
+
+const ModalTitle = styled.h3`
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #fff;
+  margin-bottom: 0.25rem;
+`;
+
+const ModalSub = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: #444;
+  margin-bottom: 1.75rem;
+`;
+
+const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+`;
+
+const FieldLabel = styled.label`
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #555;
+`;
+
+const TextInput = styled.input`
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: #0a0a0a;
+  border: 1px solid #222;
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+  &:focus { border-color: #FF6B35; }
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+`;
+
+const CancelBtn = styled.button`
+  flex: 1;
+  padding: 0.6rem;
+  background: none;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #555;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  &:hover { border-color: #555; color: #fff; }
+`;
+
+const CreateBtn = styled.button`
+  flex: 1;
+  padding: 0.6rem;
+  background: #FF6B35;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  &:hover { background: #e05a26; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+`;
+
+const ErrorMsg = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: #e74c3c;
+  margin-top: 0.75rem;
+`;
+
+/* ─── Helpers ────────────────────────────────────────────────────────────── */
+
+function toSlug(str: string) {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+/* ─── Component ──────────────────────────────────────────────────────────── */
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [studies, setStudies] = useState<StudySummary[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newLabel, setNewLabel] = useState('');
+  const [newSlug, setNewSlug] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
 
-  useEffect(() => {
+  function loadStudies() {
     fetch('/api/admin/case-studies')
       .then((r) => r.json())
       .then(setStudies);
-  }, []);
+  }
+
+  useEffect(() => { loadStudies(); }, []);
+
+  // Auto-generate slug from title
+  useEffect(() => {
+    setNewSlug(toSlug(newTitle));
+  }, [newTitle]);
 
   async function handleLogout() {
     await fetch('/api/admin/logout', { method: 'POST' });
     router.push('/admin');
+  }
+
+  async function handleCreate() {
+    if (!newTitle.trim() || !newLabel.trim() || !newSlug.trim()) return;
+    setCreating(true);
+    setCreateError('');
+    try {
+      const res = await fetch('/api/admin/case-studies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: newSlug, title: newTitle, label: newLabel }),
+      });
+      if (res.ok) {
+        router.push(`/admin/case-studies/${newSlug}`);
+      } else {
+        const j = await res.json();
+        setCreateError(j.error ?? 'Failed to create');
+      }
+    } catch {
+      setCreateError('Network error');
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function patch(slug: string, data: Record<string, unknown>) {
+    await fetch(`/api/admin/case-studies/${slug}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    loadStudies();
+  }
+
+  const selected = studies
+    .filter((s) => s.selected_work && !s.archived)
+    .sort((a, b) => (a.selected_work_order ?? 999) - (b.selected_work_order ?? 999));
+
+  const active = studies.filter((s) => !s.archived);
+  const archived = studies.filter((s) => s.archived);
+
+  async function moveOrder(index: number, direction: -1 | 1) {
+    const next = index + direction;
+    if (next < 0 || next >= selected.length) return;
+    const a = selected[index];
+    const b = selected[next];
+    await fetch(`/api/admin/case-studies/${a.slug}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selectedWorkOrder: b.selected_work_order ?? next }),
+    });
+    await fetch(`/api/admin/case-studies/${b.slug}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selectedWorkOrder: a.selected_work_order ?? index }),
+    });
+    loadStudies();
   }
 
   return (
@@ -157,12 +473,50 @@ export default function AdminDashboard() {
         <Brand>Portfolio CMS</Brand>
         <LogoutBtn onClick={handleLogout}>Sign out</LogoutBtn>
       </TopBar>
+
       <Content>
-        <PageTitle>Case Studies</PageTitle>
-        <PageSub>Select a case study to edit its content.</PageSub>
+        {/* ── Selected Work ── */}
+        <SectionHeader>
+          <SectionTitle>Selected Work</SectionTitle>
+          <NewBtn onClick={() => { setShowModal(true); setCreateError(''); }}>
+            + New Case Study
+          </NewBtn>
+        </SectionHeader>
+
+        {selected.length === 0 ? (
+          <EmptyNote>No case studies marked as selected work yet.</EmptyNote>
+        ) : (
+          <OrderList>
+            {selected.map((s, i) => (
+              <OrderRow key={s.slug}>
+                <OrderNum>{i + 1}</OrderNum>
+                <OrderInfo>
+                  <OrderTitle>{s.title}</OrderTitle>
+                  <OrderScope>{s.scope}</OrderScope>
+                </OrderInfo>
+                <OrderActions>
+                  <IconBtn onClick={() => moveOrder(i, -1)} disabled={i === 0} title="Move up">↑</IconBtn>
+                  <IconBtn onClick={() => moveOrder(i, 1)} disabled={i === selected.length - 1} title="Move down">↓</IconBtn>
+                  <IconBtn $danger onClick={() => patch(s.slug, { selectedWork: false, selectedWorkOrder: null })}>
+                    Remove
+                  </IconBtn>
+                  <EditLink href={`/admin/case-studies/${s.slug}`}>Edit →</EditLink>
+                </OrderActions>
+              </OrderRow>
+            ))}
+          </OrderList>
+        )}
+
+        <Divider />
+
+        {/* ── All Studies ── */}
+        <SectionHeader>
+          <SectionTitle>All Case Studies</SectionTitle>
+        </SectionHeader>
         <Grid>
-          {studies.map((s) => (
+          {active.map((s) => (
             <StudyCard key={s.slug} href={`/admin/case-studies/${s.slug}`}>
+              {s.selected_work && <CardBadge>Selected Work #{(s.selected_work_order ?? 0) + 1}</CardBadge>}
               <CardScope>{s.scope}</CardScope>
               <CardTitle>{s.title}</CardTitle>
               <CardMeta>{s.label} · {s.year}</CardMeta>
@@ -170,7 +524,77 @@ export default function AdminDashboard() {
             </StudyCard>
           ))}
         </Grid>
+
+        {archived.length > 0 && (
+          <>
+            <Divider />
+            <SectionHeader>
+              <SectionTitle>Archived</SectionTitle>
+            </SectionHeader>
+            <Grid>
+              {archived.map((s) => (
+                <StudyCard key={s.slug} href={`/admin/case-studies/${s.slug}`} $archived>
+                  <ArchivedBadge>Archived</ArchivedBadge>
+                  <CardScope>{s.scope}</CardScope>
+                  <CardTitle>{s.title}</CardTitle>
+                  <CardMeta>{s.label} · {s.year}</CardMeta>
+                  <EditArrow>Restore / Edit →</EditArrow>
+                </StudyCard>
+              ))}
+            </Grid>
+          </>
+        )}
       </Content>
+
+      {/* ── Create Modal ── */}
+      {showModal && (
+        <Overlay onClick={() => setShowModal(false)}>
+          <Modal onClick={(e) => e.stopPropagation()}>
+            <ModalTitle>New Case Study</ModalTitle>
+            <ModalSub>Fill in the basics — you can edit everything else after creation.</ModalSub>
+
+            <Field>
+              <FieldLabel>Title</FieldLabel>
+              <TextInput
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="e.g. Redesigning the Veevoy Platform"
+                autoFocus
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel>Short Label</FieldLabel>
+              <TextInput
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                placeholder="e.g. Veevoy"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel>Slug (URL)</FieldLabel>
+              <TextInput
+                value={newSlug}
+                onChange={(e) => setNewSlug(toSlug(e.target.value))}
+                placeholder="e.g. veevoy-web"
+              />
+            </Field>
+
+            {createError && <ErrorMsg>{createError}</ErrorMsg>}
+
+            <ModalActions>
+              <CancelBtn onClick={() => setShowModal(false)}>Cancel</CancelBtn>
+              <CreateBtn
+                onClick={handleCreate}
+                disabled={creating || !newTitle.trim() || !newLabel.trim() || !newSlug.trim()}
+              >
+                {creating ? 'Creating...' : 'Create & Edit'}
+              </CreateBtn>
+            </ModalActions>
+          </Modal>
+        </Overlay>
+      )}
     </Page>
   );
 }
