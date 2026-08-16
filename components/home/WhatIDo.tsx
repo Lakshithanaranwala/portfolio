@@ -10,7 +10,7 @@ const services = [
     number: '01',
     title: 'Product design',
     description:
-      'End-to-end UX and UI for digital products — from early concepts and user flows to polished interfaces ready to ship. I focus on clarity, structure and details that make products easier to use.',
+      'End to end UX and UI for digital products from early concepts and user flows to polished interfaces ready to ship. I focus on clarity, structure and details that make products easier to use.',
   },
   {
     number: '02',
@@ -20,15 +20,15 @@ const services = [
   },
   {
     number: '03',
-    title: 'Interface direction',
+    title: 'Prototyping & Usability Testing',
     description:
-      'Visual direction for digital products that need a distinct and consistent presence. From typography and motion to imagery and UI details, I help shape interfaces that feel cohesive and memorable.',
+      'Build interactive prototypes to validate concepts before development. Run usability tests, analyze user behavior, and iterate designs based on real feedback and product requirements.',
   },
   {
     number: '04',
-    title: 'Web design',
+    title: 'Design to Code & Frontend Collaboration',
     description:
-      'Thoughtful websites for studios, founders and brands — with a strong sense of typography, structure and visual clarity. Designed to feel considered, expressive and easy to navigate.',
+      'Translate Figma designs into production ready interfaces using technologies such as HTML, CSS, React, and Next.js. Work closely with developers to ensure accurate implementation, responsive behavior, accessibility, and design consistency.',
   },
   {
     number: '05',
@@ -38,9 +38,9 @@ const services = [
   },
   {
     number: '06',
-    title: 'Advisory & audits',
+    title: 'Product Optimization',
     description:
-      'Focused design support for teams that need an outside perspective. UX/UI reviews, design system audits and hands-on feedback to identify gaps, sharpen decisions and move work forward.',
+      'Analyze analytics, user feedback, support issues, and product performance to identify opportunities for improvement. Collaborate with Product, Engineering, and Business teams to prioritize UX enhancements that improve usability, engagement, and business outcomes.',
   },
 ];
 
