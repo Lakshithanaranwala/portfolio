@@ -58,6 +58,7 @@ export type CaseStudy = {
   insightsBody: string;
   designBody: string;
   contentImages2: CaseStudyImage[];
+  contentImages3: CaseStudyImage[];
   outcomeRows: OutcomeRow[];
   deliveryBody: string;
   finalImages: CaseStudyImage[];
@@ -164,6 +165,7 @@ export const staticCaseStudies: CaseStudy[] = [
     insightsBody: placeholderSingleBody,
     designBody: placeholderSingleBody,
     contentImages2: [{ from: '#16213e', to: '#0f3460' }, { from: '#0f3460', to: '#1a1a2e' }],
+    contentImages3: [{ from: '#16213e', to: '#0f3460' }, { from: '#0f3460', to: '#1a1a2e' }, { from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
     finalImages: [{ from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }],
@@ -196,6 +198,7 @@ export const staticCaseStudies: CaseStudy[] = [
     insightsBody: placeholderSingleBody,
     designBody: placeholderSingleBody,
     contentImages2: [{ from: '#2d1b69', to: '#553c9a' }, { from: '#1a1a2e', to: '#2d1b69' }],
+    contentImages3: [{ from: '#2d1b69', to: '#553c9a' }, { from: '#1a1a2e', to: '#2d1b69' }, { from: '#0d1b2a', to: '#1b263b' }, { from: '#2d1b69', to: '#553c9a' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
     finalImages: [{ from: '#0d1b2a', to: '#1b263b' }, { from: '#2d1b69', to: '#553c9a' }],
@@ -228,6 +231,7 @@ export const staticCaseStudies: CaseStudy[] = [
     insightsBody: placeholderSingleBody,
     designBody: placeholderSingleBody,
     contentImages2: [{ from: '#0d2b1f', to: '#1a4a35' }, { from: '#1a3a2e', to: '#0d2b1f' }],
+    contentImages3: [{ from: '#0d2b1f', to: '#1a4a35' }, { from: '#1a3a2e', to: '#0d2b1f' }, { from: '#1a3a2e', to: '#2d6a4f' }, { from: '#0d2b1f', to: '#1a4a35' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
     finalImages: [{ from: '#1a3a2e', to: '#2d6a4f' }, { from: '#0d2b1f', to: '#1a4a35' }],
@@ -260,6 +264,7 @@ export const staticCaseStudies: CaseStudy[] = [
     insightsBody: placeholderSingleBody,
     designBody: placeholderSingleBody,
     contentImages2: [{ from: '#5c1a1a', to: '#8b3a3a' }, { from: '#3a1a1a', to: '#5c1a1a' }],
+    contentImages3: [{ from: '#5c1a1a', to: '#8b3a3a' }, { from: '#3a1a1a', to: '#5c1a1a' }, { from: '#3a1a1a', to: '#6b2d2d' }, { from: '#5c1a1a', to: '#8b3a3a' }],
     outcomeRows: placeholderOutcomeRows,
     deliveryBody: placeholderDeliveryBody,
     finalImages: [{ from: '#3a1a1a', to: '#6b2d2d' }, { from: '#5c1a1a', to: '#8b3a3a' }],
@@ -298,6 +303,9 @@ function dbToCase(row: Record<string, unknown>): CaseStudy {
     insightsBody: (row.insights_body as string) ?? '',
     designBody: (row.design_body as string) ?? '',
     contentImages2: (row.content_images_2 as CaseStudyImage[]) ?? [],
+    contentImages3: ((row.content_images_3 as CaseStudyImage[] | null)?.length
+      ? row.content_images_3 as CaseStudyImage[]
+      : [{ from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }, { from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }]),
     outcomeRows: (row.outcome_rows as OutcomeRow[]) ?? [],
     deliveryBody: (row.delivery_body as string) ?? '',
     finalImages: ((row.final_images as CaseStudyImage[] | null)?.length

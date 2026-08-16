@@ -35,6 +35,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
         <CaseStudyTextSection id="cs-insights" heading="Insights" body={study.insightsBody} />
         <CaseStudyTextSection id="cs-design" heading="Design" body={study.designBody} />
         <CaseStudyImageGrid id="cs-images-2" images={study.contentImages2} alt={study.label} />
+        <CaseStudyImageGrid id="cs-images-3" images={study.contentImages3} alt={study.label} />
         <CaseStudyThreeColumn study={study} />
         <CaseStudyDelivery study={study} />
         <CaseStudyImageGrid id="cs-images-final" images={study.finalImages} alt={study.label} />

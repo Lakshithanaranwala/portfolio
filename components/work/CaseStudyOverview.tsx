@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import styled from 'styled-components';
 import type { CaseStudy } from '@/lib/caseStudies';
 
@@ -56,31 +55,6 @@ const TextBlock = styled.div`
   }
 `;
 
-const ImageGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  margin-top: 4rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-`;
-
-const ImageWrapper = styled.div`
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  position: relative;
-`;
-
-const ImagePlaceholder = styled.div<{ $from: string; $to: string }>`
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, ${({ $from }) => $from}, ${({ $to }) => $to});
-`;
-
 /* ─── Component ──────────────────────────────────────────────────────────── */
 
 export default function CaseStudyOverview({ study }: { study: CaseStudy }) {
@@ -90,23 +64,6 @@ export default function CaseStudyOverview({ study }: { study: CaseStudy }) {
         <SectionHeading>Overview</SectionHeading>
         <TextBlock dangerouslySetInnerHTML={{ __html: study.overviewBody }} />
       </TwoCol>
-
-      <ImageGrid>
-        {study.overviewImages.map((img, i) => (
-          <ImageWrapper key={i}>
-            {img.src ? (
-              <Image
-                src={img.src}
-                alt={`${study.title} overview ${i + 1}`}
-                fill
-                style={{ objectFit: 'cover' }}
-              />
-            ) : (
-              <ImagePlaceholder $from={img.from} $to={img.to} />
-            )}
-          </ImageWrapper>
-        ))}
-      </ImageGrid>
     </Section>
   );
 }

@@ -59,6 +59,7 @@ export async function PUT(
     insights_body: body.insightsBody,
     design_body: body.designBody,
     content_images_2: body.contentImages2,
+    content_images_3: body.contentImages3,
     outcome_rows: body.outcomeRows,
     delivery_body: body.deliveryBody,
     final_images: body.finalImages,

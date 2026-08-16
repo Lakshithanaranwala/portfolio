@@ -407,6 +407,7 @@ type FormState = {
   insightsBody: string;
   designBody: string;
   contentImages2: CaseStudyImage[];
+  contentImages3: CaseStudyImage[];
   outcomeRows: OutcomeRow[];
   deliveryBody: string;
   finalImages: CaseStudyImage[];
@@ -455,6 +456,12 @@ function emptyForm(): FormState {
       { from: '#0f0e17', to: '#1a1a2e' },
       { from: '#1a1a2e', to: '#16213e' },
     ],
+    contentImages3: [
+      { from: '#0f0e17', to: '#1a1a2e' },
+      { from: '#1a1a2e', to: '#16213e' },
+      { from: '#0f0e17', to: '#1a1a2e' },
+      { from: '#1a1a2e', to: '#16213e' },
+    ],
     outcomeRows: [{ problem: '', solution: '', uxImpact: '' }],
     deliveryBody: '',
     finalImages: [
@@ -494,6 +501,9 @@ function dbRowToForm(row: Record<string, unknown>): FormState {
     insightsBody: (row.insights_body as string) ?? '',
     designBody: (row.design_body as string) ?? '',
     contentImages2: (row.content_images_2 as CaseStudyImage[]) ?? [],
+    contentImages3: ((row.content_images_3 as CaseStudyImage[] | null)?.length
+      ? row.content_images_3 as CaseStudyImage[]
+      : [{ from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }, { from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }]),
     outcomeRows: (row.outcome_rows as OutcomeRow[]) ?? [{ problem: '', solution: '', uxImpact: '' }],
     deliveryBody: (row.delivery_body as string) ?? '',
     finalImages: ((row.final_images as CaseStudyImage[] | null)?.length
@@ -560,6 +570,7 @@ export default function CaseStudyEditor() {
           insightsBody: s.insightsBody,
           designBody: s.designBody,
           contentImages2: s.contentImages2,
+          contentImages3: s.contentImages3,
           outcomeRows: s.outcomeRows,
           deliveryBody: s.deliveryBody,
           finalImages: s.finalImages,
@@ -825,7 +836,7 @@ export default function CaseStudyEditor() {
           {activeTab === 'overview' && (
             <>
               <TabTitle>Overview</TabTitle>
-              <TabSub>Project overview body text and overview images.</TabSub>
+              <TabSub>Project overview body text.</TabSub>
 
               <Field>
                 <FieldLabel>Overview Body</FieldLabel>
@@ -835,25 +846,6 @@ export default function CaseStudyEditor() {
                   placeholder="Describe the project overview..."
                 />
               </Field>
-
-              <Divider />
-
-              <FieldLabel style={{ display: 'block', marginBottom: '1rem' }}>
-                Overview Images
-              </FieldLabel>
-              {form.overviewImages.map((img, i) => (
-                <Field key={i}>
-                  <ImageUpload
-                    label={`Image ${i + 1}`}
-                    value={img.src}
-                    onChange={(url) => {
-                      const next = [...form.overviewImages];
-                      next[i] = { ...next[i], src: url };
-                      set('overviewImages', next);
-                    }}
-                  />
-                </Field>
-              ))}
             </>
           )}
 
@@ -1069,6 +1061,25 @@ export default function CaseStudyEditor() {
                       const next = [...form.contentImages2];
                       next[i] = { ...next[i], src: url };
                       set('contentImages2', next);
+                    }}
+                  />
+                </Field>
+              ))}
+
+              <Divider />
+
+              <FieldLabel style={{ display: 'block', marginBottom: '1rem' }}>
+                Visual Design Images (Section 3 — 2×2 grid)
+              </FieldLabel>
+              {form.contentImages3.map((img, i) => (
+                <Field key={i}>
+                  <ImageUpload
+                    label={`Image ${i + 1}`}
+                    value={img.src}
+                    onChange={(url) => {
+                      const next = [...form.contentImages3];
+                      next[i] = { ...next[i], src: url };
+                      set('contentImages3', next);
                     }}
                   />
                 </Field>
