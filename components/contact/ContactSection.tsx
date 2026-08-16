@@ -2,20 +2,19 @@
 
 import { useState } from 'react';
 import styled from 'styled-components';
-import ContactParticleCanvas from './ContactParticleCanvas';
 
 /* ─── Styled Components ─────────────────────────────────────────────────── */
 
 const Section = styled.section`
-  min-height: 100svh;
+  flex: 1;
   background: ${({ theme }) => theme.colors.bg};
   display: flex;
   flex-direction: column;
-  padding: 10rem 7.5rem 0;
+  padding: 10rem 7.5rem 6rem;
   transition: background 0.4s ease;
 
   @media (max-width: 900px) {
-    padding: 8rem 1.25rem 0;
+    padding: 8rem 1.25rem 4rem;
   }
 `;
 
@@ -29,14 +28,6 @@ const ContentRow = styled.div`
     gap: 4rem;
     padding-bottom: 3rem;
   }
-`;
-
-const CanvasArea = styled.div`
-  position: relative;
-  flex: 1;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
 `;
 
 const Left = styled.div`
@@ -313,9 +304,6 @@ export default function ContactSection() {
         )}
       </Right>
       </ContentRow>
-      <CanvasArea>
-        <ContactParticleCanvas />
-      </CanvasArea>
     </Section>
   );
 }

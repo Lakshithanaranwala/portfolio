@@ -186,8 +186,8 @@ export default function Navbar() {
       <NavRight>
         <NavLinks>
           <NavLink href="/work">Work</NavLink>
-          <NavLink href="/personal">Personal</NavLink>
-          <NavLink href="/about">About</NavLink>
+          <NavLink href="/personal">Design</NavLink>
+          <NavLink href="/about">Experience</NavLink>
         </NavLinks>
 
         <ResumeButton href="/resume.pdf" target="_blank" rel="noopener noreferrer">
