@@ -99,7 +99,7 @@ const NavLink = styled(Link)`
   }
 `;
 
-const ResumeButton = styled.a`
+const ResumeButton = styled(Link)`
   font-family: var(--font-body);
   font-size: 0.8125rem;
   font-weight: 500;
@@ -190,7 +190,7 @@ export default function Navbar() {
           <NavLink href="/about">Experience</NavLink>
         </NavLinks>
 
-        <ResumeButton href="/resume.pdf" target="_blank" rel="noopener noreferrer">
+        <ResumeButton href="/resume">
           Resume
         </ResumeButton>
 

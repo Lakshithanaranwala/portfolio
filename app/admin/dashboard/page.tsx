@@ -24,6 +24,15 @@ type ShowcaseImage = {
   order: number;
 };
 
+type KindWord = {
+  id: string;
+  quote: string;
+  name: string;
+  position: string;
+  company: string;
+  created_at: string;
+};
+
 type StudySummary = {
   slug: string;
   label: string;
@@ -551,6 +560,62 @@ const UploadText = styled.p`
   color: #555;
 `;
 
+/* ── Kind Words ── */
+
+const KindWordsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+`;
+
+const KindWordCard = styled.div`
+  background: #111;
+  border: 1px solid #1a1a1a;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+`;
+
+const KindWordQuote = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: #aaa;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid #1a1a1a;
+  padding-bottom: 0.75rem;
+`;
+
+const KindWordMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+`;
+
+const KindWordAuthor = styled.p`
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: #555;
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: #0a0a0a;
+  border: 1px solid #222;
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 100px;
+  transition: border-color 0.2s ease;
+  &:focus { border-color: #FF6B35; }
+`;
+
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
 function toSlug(str: string) {
@@ -566,12 +631,27 @@ function toSlug(str: string) {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'studies' | 'messages' | 'showcase'>('studies');
+  const [activeTab, setActiveTab] = useState<'studies' | 'messages' | 'showcase' | 'branding' | 'illustrations' | 'marketing' | 'kindwords'>('studies');
   const [studies, setStudies] = useState<StudySummary[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [showcaseImages, setShowcaseImages] = useState<ShowcaseImage[]>([]);
   const [showcaseUploading, setShowcaseUploading] = useState(false);
   const showcaseInputRef = useRef<HTMLInputElement>(null);
+  const [brandingImages, setBrandingImages] = useState<ShowcaseImage[]>([]);
+  const [brandingUploading, setBrandingUploading] = useState(false);
+  const brandingInputRef = useRef<HTMLInputElement>(null);
+  const [illustrationsImages, setIllustrationsImages] = useState<ShowcaseImage[]>([]);
+  const [illustrationsUploading, setIllustrationsUploading] = useState(false);
+  const illustrationsInputRef = useRef<HTMLInputElement>(null);
+  const [marketingImages, setMarketingImages] = useState<ShowcaseImage[]>([]);
+  const [marketingUploading, setMarketingUploading] = useState(false);
+  const marketingInputRef = useRef<HTMLInputElement>(null);
+  const [kindWords, setKindWords] = useState<KindWord[]>([]);
+  const [kwQuote, setKwQuote] = useState('');
+  const [kwName, setKwName] = useState('');
+  const [kwPosition, setKwPosition] = useState('');
+  const [kwCompany, setKwCompany] = useState('');
+  const [kwSaving, setKwSaving] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newLabel, setNewLabel] = useState('');
@@ -597,7 +677,31 @@ export default function AdminDashboard() {
       .then((data) => { if (Array.isArray(data)) setShowcaseImages(data); });
   }
 
-  useEffect(() => { loadStudies(); loadMessages(); loadShowcase(); }, []);
+  function loadBranding() {
+    fetch('/api/admin/branding')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setBrandingImages(data); });
+  }
+
+  function loadIllustrations() {
+    fetch('/api/admin/illustrations')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setIllustrationsImages(data); });
+  }
+
+  function loadMarketing() {
+    fetch('/api/admin/marketing')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setMarketingImages(data); });
+  }
+
+  function loadKindWords() {
+    fetch('/api/admin/kind-words')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setKindWords(data); });
+  }
+
+  useEffect(() => { loadStudies(); loadMessages(); loadShowcase(); loadBranding(); loadIllustrations(); loadMarketing(); loadKindWords(); }, []);
 
   async function handleShowcaseUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -626,6 +730,114 @@ export default function AdminDashboard() {
   async function deleteShowcaseImage(id: string) {
     await fetch(`/api/admin/showcase/${id}`, { method: 'DELETE' });
     loadShowcase();
+  }
+
+  async function handleBrandingUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setBrandingUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const form = new FormData();
+        form.append('file', file);
+        const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: form });
+        const { url } = await uploadRes.json();
+        if (url) {
+          await fetch('/api/admin/branding', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, alt: file.name.replace(/\.[^.]+$/, '') }),
+          });
+        }
+      }
+      loadBranding();
+    } finally {
+      setBrandingUploading(false);
+      if (brandingInputRef.current) brandingInputRef.current.value = '';
+    }
+  }
+
+  async function deleteBrandingImage(id: string) {
+    await fetch(`/api/admin/branding/${id}`, { method: 'DELETE' });
+    loadBranding();
+  }
+
+  async function handleIllustrationsUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setIllustrationsUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const form = new FormData();
+        form.append('file', file);
+        const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: form });
+        const { url } = await uploadRes.json();
+        if (url) {
+          await fetch('/api/admin/illustrations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, alt: file.name.replace(/\.[^.]+$/, '') }),
+          });
+        }
+      }
+      loadIllustrations();
+    } finally {
+      setIllustrationsUploading(false);
+      if (illustrationsInputRef.current) illustrationsInputRef.current.value = '';
+    }
+  }
+
+  async function deleteIllustrationImage(id: string) {
+    await fetch(`/api/admin/illustrations/${id}`, { method: 'DELETE' });
+    loadIllustrations();
+  }
+
+  async function handleMarketingUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setMarketingUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const form = new FormData();
+        form.append('file', file);
+        const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: form });
+        const { url } = await uploadRes.json();
+        if (url) {
+          await fetch('/api/admin/marketing', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, alt: file.name.replace(/\.[^.]+$/, '') }),
+          });
+        }
+      }
+      loadMarketing();
+    } finally {
+      setMarketingUploading(false);
+      if (marketingInputRef.current) marketingInputRef.current.value = '';
+    }
+  }
+
+  async function deleteMarketingImage(id: string) {
+    await fetch(`/api/admin/marketing/${id}`, { method: 'DELETE' });
+    loadMarketing();
+  }
+
+  async function saveKindWord() {
+    if (!kwQuote.trim() || !kwName.trim()) return;
+    setKwSaving(true);
+    try {
+      await fetch('/api/admin/kind-words', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quote: kwQuote, name: kwName, position: kwPosition, company: kwCompany }),
+      });
+      setKwQuote(''); setKwName(''); setKwPosition(''); setKwCompany('');
+      loadKindWords();
+    } finally {
+      setKwSaving(false);
+    }
+  }
+
+  async function deleteKindWord(id: string) {
+    await fetch(`/api/admin/kind-words/${id}`, { method: 'DELETE' });
+    loadKindWords();
   }
 
   // Auto-generate slug from title
@@ -718,6 +930,18 @@ export default function AdminDashboard() {
           <Tab $active={activeTab === 'showcase'} onClick={() => setActiveTab('showcase')}>
             Work Showcase
           </Tab>
+          <Tab $active={activeTab === 'branding'} onClick={() => setActiveTab('branding')}>
+            Branding
+          </Tab>
+          <Tab $active={activeTab === 'illustrations'} onClick={() => setActiveTab('illustrations')}>
+            Illustrations
+          </Tab>
+          <Tab $active={activeTab === 'marketing'} onClick={() => setActiveTab('marketing')}>
+            Marketing
+          </Tab>
+          <Tab $active={activeTab === 'kindwords'} onClick={() => setActiveTab('kindwords')}>
+            Kind Words
+          </Tab>
         </TabNav>
 
         {/* ── Messages Tab ── */}
@@ -790,6 +1014,184 @@ export default function AdminDashboard() {
                 {showcaseUploading ? 'Uploading...' : 'Click to upload images (select multiple at once)'}
               </UploadText>
             </UploadZone>
+          </>
+        )}
+
+        {/* ── Branding Tab ── */}
+        {activeTab === 'branding' && (
+          <>
+            <SectionHeader>
+              <SectionTitle>Branding Page Images</SectionTitle>
+            </SectionHeader>
+
+            {brandingImages.length > 0 && (
+              <ShowcaseGrid>
+                {brandingImages.map((img) => (
+                  <ShowcaseCard key={img.id}>
+                    <ShowcaseThumb>
+                      <Image src={img.url} alt={img.alt} fill style={{ objectFit: 'cover' }} />
+                    </ShowcaseThumb>
+                    <ShowcaseCardFooter>
+                      <ShowcaseAlt>{img.alt || 'Untitled'}</ShowcaseAlt>
+                      <DeleteBtn onClick={() => deleteBrandingImage(img.id)}>Delete</DeleteBtn>
+                    </ShowcaseCardFooter>
+                  </ShowcaseCard>
+                ))}
+              </ShowcaseGrid>
+            )}
+
+            <UploadZone $uploading={brandingUploading}>
+              <input
+                ref={brandingInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={(e) => handleBrandingUpload(e.target.files)}
+                disabled={brandingUploading}
+              />
+              <UploadText>
+                {brandingUploading ? 'Uploading...' : 'Click to upload images (select multiple at once)'}
+              </UploadText>
+            </UploadZone>
+          </>
+        )}
+
+        {/* ── Illustrations Tab ── */}
+        {activeTab === 'illustrations' && (
+          <>
+            <SectionHeader>
+              <SectionTitle>Illustrations Page Images</SectionTitle>
+            </SectionHeader>
+
+            {illustrationsImages.length > 0 && (
+              <ShowcaseGrid>
+                {illustrationsImages.map((img) => (
+                  <ShowcaseCard key={img.id}>
+                    <ShowcaseThumb>
+                      <Image src={img.url} alt={img.alt} fill style={{ objectFit: 'cover' }} />
+                    </ShowcaseThumb>
+                    <ShowcaseCardFooter>
+                      <ShowcaseAlt>{img.alt || 'Untitled'}</ShowcaseAlt>
+                      <DeleteBtn onClick={() => deleteIllustrationImage(img.id)}>Delete</DeleteBtn>
+                    </ShowcaseCardFooter>
+                  </ShowcaseCard>
+                ))}
+              </ShowcaseGrid>
+            )}
+
+            <UploadZone $uploading={illustrationsUploading}>
+              <input
+                ref={illustrationsInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={(e) => handleIllustrationsUpload(e.target.files)}
+                disabled={illustrationsUploading}
+              />
+              <UploadText>
+                {illustrationsUploading ? 'Uploading...' : 'Click to upload images (select multiple at once)'}
+              </UploadText>
+            </UploadZone>
+          </>
+        )}
+
+        {/* ── Marketing Tab ── */}
+        {activeTab === 'marketing' && (
+          <>
+            <SectionHeader>
+              <SectionTitle>Marketing Page Images</SectionTitle>
+            </SectionHeader>
+
+            {marketingImages.length > 0 && (
+              <ShowcaseGrid>
+                {marketingImages.map((img) => (
+                  <ShowcaseCard key={img.id}>
+                    <ShowcaseThumb>
+                      <Image src={img.url} alt={img.alt} fill style={{ objectFit: 'cover' }} />
+                    </ShowcaseThumb>
+                    <ShowcaseCardFooter>
+                      <ShowcaseAlt>{img.alt || 'Untitled'}</ShowcaseAlt>
+                      <DeleteBtn onClick={() => deleteMarketingImage(img.id)}>Delete</DeleteBtn>
+                    </ShowcaseCardFooter>
+                  </ShowcaseCard>
+                ))}
+              </ShowcaseGrid>
+            )}
+
+            <UploadZone $uploading={marketingUploading}>
+              <input
+                ref={marketingInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={(e) => handleMarketingUpload(e.target.files)}
+                disabled={marketingUploading}
+              />
+              <UploadText>
+                {marketingUploading ? 'Uploading...' : 'Click to upload images (select multiple at once)'}
+              </UploadText>
+            </UploadZone>
+          </>
+        )}
+
+        {/* ── Kind Words Tab ── */}
+        {activeTab === 'kindwords' && (
+          <>
+            <SectionHeader>
+              <SectionTitle>Kind Words ({kindWords.length})</SectionTitle>
+            </SectionHeader>
+
+            {kindWords.length > 0 && (
+              <KindWordsList>
+                {kindWords.map((kw) => (
+                  <KindWordCard key={kw.id}>
+                    <KindWordQuote>{kw.quote}</KindWordQuote>
+                    <KindWordMeta>
+                      <KindWordAuthor>
+                        {kw.name}{kw.position ? ` · ${kw.position}` : ''}{kw.company ? `, ${kw.company}` : ''}
+                      </KindWordAuthor>
+                      <DeleteBtn onClick={() => deleteKindWord(kw.id)}>Delete</DeleteBtn>
+                    </KindWordMeta>
+                  </KindWordCard>
+                ))}
+              </KindWordsList>
+            )}
+
+            <Divider />
+
+            <SectionTitle style={{ marginBottom: '1rem' }}>Add New Testimonial</SectionTitle>
+
+            <Field>
+              <FieldLabel>Quote</FieldLabel>
+              <TextArea
+                value={kwQuote}
+                onChange={(e) => setKwQuote(e.target.value)}
+                placeholder='"Working with Lakshitha was..."'
+              />
+            </Field>
+            <Field>
+              <FieldLabel>Name</FieldLabel>
+              <TextInput value={kwName} onChange={(e) => setKwName(e.target.value)} placeholder="Alex Thompson" />
+            </Field>
+            <Field>
+              <FieldLabel>Position</FieldLabel>
+              <TextInput value={kwPosition} onChange={(e) => setKwPosition(e.target.value)} placeholder="Product Director" />
+            </Field>
+            <Field>
+              <FieldLabel>Company</FieldLabel>
+              <TextInput value={kwCompany} onChange={(e) => setKwCompany(e.target.value)} placeholder="Launchpad Studio" />
+            </Field>
+
+            <CreateBtn
+              onClick={saveKindWord}
+              disabled={kwSaving || !kwQuote.trim() || !kwName.trim()}
+              style={{ width: '100%', marginTop: '0.5rem' }}
+            >
+              {kwSaving ? 'Saving...' : 'Add Testimonial'}
+            </CreateBtn>
           </>
         )}
 

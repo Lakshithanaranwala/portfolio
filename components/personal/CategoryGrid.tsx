@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
@@ -13,16 +14,19 @@ const CATEGORIES = [
     label: 'Branding',
     src: '/personal/branding.png',
     raised: false,
+    href: '/personal/branding',
   },
   {
     label: 'Illustrations',
     src: '/personal/illustrations.png',
     raised: true,
+    href: '/personal/illustrations',
   },
   {
     label: 'Marketing',
     src: '/personal/marketing.png',
     raised: false,
+    href: '/personal/marketing',
   },
 ];
 
@@ -161,18 +165,24 @@ export default function CategoryGrid() {
   return (
     <>
       <Grid ref={gridRef} style={{ cursor: 'none' }}>
-        {CATEGORIES.map((cat) => (
-          <Card key={cat.label} $raised={cat.raised}>
-            <Image
-              src={cat.src}
-              alt={cat.label}
-              fill
-              style={{ objectFit: 'cover' }}
-            />
-            <Overlay />
-            <CategoryLabel>{cat.label}</CategoryLabel>
-          </Card>
-        ))}
+        {CATEGORIES.map((cat) => {
+          const inner = (
+            <>
+              <Image src={cat.src} alt={cat.label} fill style={{ objectFit: 'cover' }} />
+              <Overlay />
+              <CategoryLabel>{cat.label}</CategoryLabel>
+            </>
+          );
+          return (
+            <Card key={cat.label} $raised={cat.raised}>
+              {cat.href ? (
+                <Link href={cat.href} style={{ display: 'block', inset: 0, position: 'absolute' }}>
+                  {inner}
+                </Link>
+              ) : inner}
+            </Card>
+          );
+        })}
       </Grid>
 
       <CustomCursor ref={cursorRef} $visible={cursorVisible}>

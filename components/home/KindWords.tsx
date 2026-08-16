@@ -8,26 +8,28 @@ import styled from 'styled-components';
 
 const DURATION = 10000;
 
-const testimonials = [
+type Testimonial = { id: string; quote: string; name: string; position: string; company: string };
+
+const FALLBACK: Testimonial[] = [
   {
-    quote:
-      '"Working with Lakshitha was a seamless experience from start to finish. He brought a clear design vision, asked the right questions, and delivered a product that exceeded our expectations. The attention to detail and genuine care for the user experience truly showed in every decision."',
+    id: '1',
+    quote: '"Working with Lakshitha was a seamless experience from start to finish. He brought a clear design vision, asked the right questions, and delivered a product that exceeded our expectations. The attention to detail and genuine care for the user experience truly showed in every decision."',
     name: 'Alex Thompson',
-    role: 'Product Director',
+    position: 'Product Director',
     company: 'Launchpad Studio',
   },
   {
-    quote:
-      '"Lakshitha redesigned our entire app interface and the results were remarkable. User engagement improved significantly, and our team finally had a coherent design system to build from. He communicates clearly, moves fast, and consistently delivers quality work."',
+    id: '2',
+    quote: '"Lakshitha redesigned our entire app interface and the results were remarkable. User engagement improved significantly, and our team finally had a coherent design system to build from. He communicates clearly, moves fast, and consistently delivers quality work."',
     name: 'Sarah Mitchell',
-    role: 'Head of Product',
+    position: 'Head of Product',
     company: 'Finflow',
   },
   {
-    quote:
-      '"I hired Lakshitha to build the brand identity and website for my consultancy. He understood the brief immediately and came back with ideas that felt fresh but grounded. The final result was polished, professional, and exactly on point."',
+    id: '3',
+    quote: '"I hired Lakshitha to build the brand identity and website for my consultancy. He understood the brief immediately and came back with ideas that felt fresh but grounded. The final result was polished, professional, and exactly on point."',
     name: 'James Okafor',
-    role: 'Founder',
+    position: 'Founder',
     company: 'Meridian Advisory',
   },
 ];
@@ -141,6 +143,8 @@ const ProgressFill = styled.div`
 /* ─── Component ──────────────────────────────────────────────────────────── */
 
 export default function KindWords() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(FALLBACK);
+  const testimonialsLenRef = useRef(FALLBACK.length);
   const [currentIdx, setCurrentIdx] = useState(0);
 
   const isPausedRef = useRef(false);
@@ -148,6 +152,18 @@ export default function KindWords() {
   const progressFillRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    fetch('/api/kind-words')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTestimonials(data);
+          testimonialsLenRef.current = data.length;
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const animate = (time: number) => {
@@ -165,7 +181,7 @@ export default function KindWords() {
 
         if (progressRef.current >= 1) {
           progressRef.current = 0;
-          setCurrentIdx((prev) => (prev + 1) % testimonials.length);
+          setCurrentIdx((prev) => (prev + 1) % testimonialsLenRef.current);
         }
       }
     };
@@ -197,7 +213,7 @@ export default function KindWords() {
               <Author>
                 <AuthorName>{testimonials[currentIdx].name}</AuthorName>
                 <AuthorMeta>
-                  {testimonials[currentIdx].role}
+                  {testimonials[currentIdx].position}
                   <br />
                   {testimonials[currentIdx].company}
                 </AuthorMeta>
