@@ -1,7 +1,10 @@
 'use client';
 
 import Image from 'next/image';
+import { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
+
+const CURSOR_SIZE = 64;
 
 /* ─── Data ───────────────────────────────────────────────────────────────── */
 
@@ -87,23 +90,97 @@ const CategoryLabel = styled.p`
   margin: 0;
 `;
 
+const CustomCursor = styled.div<{ $visible: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: ${CURSOR_SIZE}px;
+  height: ${CURSOR_SIZE}px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${({ theme }) => theme.colors.buttonFillBg};
+  color: ${({ theme }) => theme.colors.buttonFillText};
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transition: opacity 0.2s ease;
+  will-change: transform;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
 /* ─── Component ──────────────────────────────────────────────────────────── */
 
 export default function CategoryGrid() {
+  const [cursorVisible, setCursorVisible] = useState(false);
+  const gridRef        = useRef<HTMLDivElement>(null);
+  const cursorRef      = useRef<HTMLDivElement>(null);
+  const cursorPosRef   = useRef({ x: 0, y: 0 });
+  const targetPosRef   = useRef({ x: 0, y: 0 });
+  const rafRef         = useRef<number>(0);
+
+  useEffect(() => {
+    const animate = () => {
+      rafRef.current = requestAnimationFrame(animate);
+      if (cursorRef.current) {
+        cursorPosRef.current.x += (targetPosRef.current.x - cursorPosRef.current.x) * 0.14;
+        cursorPosRef.current.y += (targetPosRef.current.y - cursorPosRef.current.y) * 0.14;
+        cursorRef.current.style.transform = `translate3d(${cursorPosRef.current.x - CURSOR_SIZE / 2}px, ${cursorPosRef.current.y - CURSOR_SIZE / 2}px, 0)`;
+      }
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+
+    const onMove   = (e: MouseEvent) => { targetPosRef.current = { x: e.clientX, y: e.clientY }; };
+    const onEnter  = (e: MouseEvent) => {
+      cursorPosRef.current = { x: e.clientX, y: e.clientY };
+      targetPosRef.current = { x: e.clientX, y: e.clientY };
+      setCursorVisible(true);
+    };
+    const onLeave  = () => setCursorVisible(false);
+
+    grid.addEventListener('mousemove',  onMove,  { passive: true });
+    grid.addEventListener('mouseenter', onEnter);
+    grid.addEventListener('mouseleave', onLeave);
+    return () => {
+      grid.removeEventListener('mousemove',  onMove);
+      grid.removeEventListener('mouseenter', onEnter);
+      grid.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
+
   return (
-    <Grid>
-      {CATEGORIES.map((cat) => (
-        <Card key={cat.label} $raised={cat.raised}>
-          <Image
-            src={cat.src}
-            alt={cat.label}
-            fill
-            style={{ objectFit: 'cover' }}
-          />
-          <Overlay />
-          <CategoryLabel>{cat.label}</CategoryLabel>
-        </Card>
-      ))}
-    </Grid>
+    <>
+      <Grid ref={gridRef} style={{ cursor: 'none' }}>
+        {CATEGORIES.map((cat) => (
+          <Card key={cat.label} $raised={cat.raised}>
+            <Image
+              src={cat.src}
+              alt={cat.label}
+              fill
+              style={{ objectFit: 'cover' }}
+            />
+            <Overlay />
+            <CategoryLabel>{cat.label}</CategoryLabel>
+          </Card>
+        ))}
+      </Grid>
+
+      <CustomCursor ref={cursorRef} $visible={cursorVisible}>
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <line x1="8" y1="20" x2="20" y2="8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          <polyline points="11,8 20,8 20,17" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </CustomCursor>
+    </>
   );
 }
