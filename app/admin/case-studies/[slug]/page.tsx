@@ -496,11 +496,15 @@ function dbRowToForm(row: Record<string, unknown>): FormState {
     problemStatement: (row.problem_statement as string) ?? '',
     goalBody: (row.goal_body as string) ?? '',
     approachBody: (row.approach_body as string) ?? '',
-    contentImages1: (row.content_images_1 as CaseStudyImage[]) ?? [],
+    contentImages1: ((row.content_images_1 as CaseStudyImage[] | null)?.length
+      ? row.content_images_1 as CaseStudyImage[]
+      : [{ from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }]),
     painPoints: (row.pain_points as PainPointGroup[]) ?? [],
     insightsBody: (row.insights_body as string) ?? '',
     designBody: (row.design_body as string) ?? '',
-    contentImages2: (row.content_images_2 as CaseStudyImage[]) ?? [],
+    contentImages2: ((row.content_images_2 as CaseStudyImage[] | null)?.length
+      ? row.content_images_2 as CaseStudyImage[]
+      : [{ from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }]),
     contentImages3: ((row.content_images_3 as CaseStudyImage[] | null)?.length
       ? row.content_images_3 as CaseStudyImage[]
       : [{ from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }, { from: '#0f0e17', to: '#1a1a2e' }, { from: '#1a1a2e', to: '#16213e' }]),
